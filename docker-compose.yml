@@ -1,0 +1,76 @@
+version: "3.8"
+services:
+  db:
+    image: supabase/postgres:15.1.0.117
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: your-super-secret-password
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  studio:
+    image: supabase/studio:20240306-6daa82c
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: your-super-secret-password
+      DEFAULT_ORGANIZATION: Default Organization
+      DEFAULT_PROJECT: Default Project
+
+  kong:
+    image: kong:2.8.1
+    restart: always
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl
+    volumes:
+      - ./volumes/kong.yml:/var/lib/kong/kong.yml:ro
+
+  auth:
+    image: supabase/gotrue:v2.132.3
+    restart: always
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:8000
+      DATABASE_URL: postgres://postgres:your-super-secret-password@db:5432/postgres?sslmode=disable
+      GOTRUE_JWT_SECRET: your-super-secret-jwt-token
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_DB_AUTO_MIGRATE: "true"
+    depends_on:
+      - db
+
+  rest:
+    image: postgrest/postgrest:v11.2.0
+    restart: always
+    environment:
+      PGRST_DB_URI: postgres://postgres:your-super-secret-password@db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: your-super-secret-jwt-token
+    depends_on:
+      - db
+
+  meta:
+    image: supabase/postgres-meta:v0.68.0
+    restart: always
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PASSWORD: your-super-secret-password
+    depends_on:
+      - db
+
+volumes:
+  db-data: 
