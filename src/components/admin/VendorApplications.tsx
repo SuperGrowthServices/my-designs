@@ -19,10 +19,12 @@ import {
 import { MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
+import { useToast } from "@/hooks/use-toast";
 
 export const VendorApplications: React.FC = () => {
   const { vendorApplications, refresh: refetchVendorApplications } = useAdminData();
-  const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
+  const [loadingStates, setLoadingStates] = useState<{ [key: string]: boolean }>({});
+  const { toast } = useToast();
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {  // Case-insensitive check
@@ -36,58 +38,161 @@ export const VendorApplications: React.FC = () => {
   };
 
   const handleApprove = async (user_id: string) => {
-    setLoadingUserId(user_id);
+    console.log('Attempting to approve application for user_id:', user_id);
+    
+    if (!user_id) {
+      console.error('Invalid user_id:', user_id);
+      toast({
+        title: "Error",
+        description: "Invalid user ID. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingStates(prev => ({ ...prev, [user_id]: true }));
     
     try {
       // Update application status
-      const { error: updateError } = await supabase
+      const { data: profileData, error: updateError } = await supabase
         .from('user_profiles')
         .update({ application_status: 'approved' })
-        .eq('user_id', user_id);
+        .eq('user_id', user_id)
+        .select()
+        .single();
+
+      console.log('Profile update result:', { profileData, updateError });
 
       if (updateError) throw updateError;
 
-      // Delete buyer role
+      // Delete buyer role if exists
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', user_id)
         .eq('role', 'buyer');
 
-      if (deleteError) throw deleteError;
+      console.log('Delete buyer role result:', { deleteError });
 
       // Add vendor role
-      const { error: insertError } = await supabase
+      const { data: roleData, error: insertError } = await supabase
         .from('user_roles')
-        .insert({ user_id, role: 'vendor' });
+        .insert([{ 
+          user_id, 
+          role: 'vendor',
+          is_approved: true 
+        }])
+        .select()
+        .single();
+
+      console.log('Insert vendor role result:', { roleData, insertError });
 
       if (insertError) throw insertError;
 
       await refetchVendorApplications();
+      
+      toast({
+        title: "Application approved",
+        description: "Vendor application has been approved successfully.",
+        variant: "default",
+      });
     } catch (error) {
       console.error('Approval failed:', error);
+      toast({
+        title: "Error",
+        description: `Failed to approve the application: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
-      setLoadingUserId(null);
+      setLoadingStates(prev => ({ ...prev, [user_id]: false }));
     }
   };
 
   const handleReject = async (user_id: string) => {
-    setLoadingUserId(user_id);
+    console.log('Attempting to reject application for user_id:', user_id);
+    
+    if (!user_id) {
+      console.error('Invalid user_id:', user_id);
+      toast({
+        title: "Error",
+        description: "Invalid user ID. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingStates(prev => ({ ...prev, [user_id]: true }));
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .update({ application_status: 'rejected' })
-        .eq('user_id', user_id);
+        .eq('user_id', user_id)
+        .select()
+        .single();
+
+      console.log('Rejection update result:', { data, error });
 
       if (error) throw error;
 
       await refetchVendorApplications();
+      
+      toast({
+        title: "Application rejected",
+        description: "Vendor application has been rejected.",
+        variant: "default",
+      });
     } catch (error) {
       console.error('Rejection failed:', error);
+      toast({
+        title: "Error",
+        description: `Failed to reject the application: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
-      setLoadingUserId(null);
+      setLoadingStates(prev => ({ ...prev, [user_id]: false }));
     }
+  };
+
+  const renderActionButtons = (application: any) => {
+    const status = application.application_status?.toLowerCase();
+    const isLoading = loadingStates[application.user_id] || false;
+
+    // Debug log for application data
+    console.log('Rendering action buttons for application:', {
+      id: application.id,
+      user_id: application.user_id,
+      status: status,
+      isLoading: isLoading
+    });
+
+    // Only show actions for pending applications
+    if (status === 'pending') {
+      return (
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => application.user_id && handleApprove(application.user_id)}
+            disabled={isLoading || !application.user_id}
+            variant="outline"
+            size="sm"
+            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+          >
+            {isLoading ? 'Processing...' : 'Approve'}
+          </Button>
+          <Button
+            onClick={() => application.user_id && handleReject(application.user_id)}
+            disabled={isLoading || !application.user_id}
+            variant="outline"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            {isLoading ? 'Processing...' : 'Reject'}
+          </Button>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -110,50 +215,23 @@ export const VendorApplications: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendorApplications.map((app) => {
-              const status = app.application_status?.toLowerCase() || '';
-              const isPending = status === 'pending';
-              const isLoading = loadingUserId === app.user_id;
-              
-              return (
-                <TableRow key={app.id}>
-                  <TableCell className="font-medium">{app.business_name || 'N/A'}</TableCell>
-                  <TableCell>{app.full_name}</TableCell>
-                  <TableCell>{app.whatsapp_number}</TableCell>
-                  <TableCell>{app.location}</TableCell>
-                  <TableCell>{format(new Date(app.application_submitted_at), 'PPP')}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(app.application_status)}>
-                      {app.application_status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleApprove(app.user_id)}
-                          disabled={!isPending || isLoading}
-                        >
-                          Approve
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleReject(app.user_id)}
-                          disabled={!isPending || isLoading}
-                        >
-                          Reject
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+            {vendorApplications.map((app) => (
+              <TableRow key={app.id}>
+                <TableCell className="font-medium">{app.business_name || 'N/A'}</TableCell>
+                <TableCell>{app.full_name}</TableCell>
+                <TableCell>{app.whatsapp_number}</TableCell>
+                <TableCell>{app.location}</TableCell>
+                <TableCell>{format(new Date(app.application_submitted_at), 'PPP')}</TableCell>
+                <TableCell>
+                  <Badge variant={getStatusVariant(app.application_status)}>
+                    {app.application_status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {renderActionButtons(app)}
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>

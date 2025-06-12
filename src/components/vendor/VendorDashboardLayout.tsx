@@ -82,15 +82,7 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
         </div>
       )}
 
-      {!isDesignMode && (
-          <Button
-            onClick={onSwitchToBuyer}
-            variant="outline"
-            className="w-full text-sm bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-          >
-            👤 Switch to Buyer Mode
-          </Button>
-      )}
+      
     </div>
   );
 

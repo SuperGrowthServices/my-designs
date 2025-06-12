@@ -87,6 +87,26 @@ export const useAdminData = (): AdminData => {
     }
   }, []);
 
+  const fetchVendorApplications = async () => {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select(`
+        id,
+        user_id,
+        full_name,
+        business_name,
+        whatsapp_number,
+        location,
+        application_status,
+        application_submitted_at
+      `)
+      .not('application_status', 'eq', 'not_applied')
+      .order('application_submitted_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  };
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
