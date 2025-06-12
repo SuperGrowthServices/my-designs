@@ -12,8 +12,10 @@ import {
   User,
   Search,
   List,
-  Check
+  Check,
+  Shield
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export type VendorDashboardTab = 'home' | 'ready-to-ship' | 'sales-history' | 'settings';
 
@@ -24,6 +26,7 @@ interface VendorDashboardLayoutProps {
   userProfile?: any;
   onSwitchToBuyer: () => void;
   isDesignMode?: boolean;
+  isAdmin?: boolean;  // Add this prop
 }
 
 const liveTabs = [
@@ -43,10 +46,23 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
   onTabChange,
   userProfile,
   onSwitchToBuyer,
-  isDesignMode = false
+  isDesignMode = false,
+  isAdmin = false  // Add this prop
 }) => {
   const { signOut } = useAuth();
-  
+  const navigate = useNavigate();
+
+  const handleModeSwitch = (mode: 'buyer' | 'admin') => {
+    switch (mode) {
+      case 'buyer':
+        navigate('/dashboard');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+    }
+  };
+
   const tabs = isDesignMode ? designTabs : liveTabs;
 
   const sidebarItems = tabs.map(tab => ({
@@ -79,14 +95,44 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
   );
 
   const footer = (
-    <Button
-      onClick={signOut}
-      variant="outline"
-      className="w-full flex items-center justify-center hover:bg-gray-50"
-    >
-      <LogOut className="w-4 h-4 mr-2" />
-      Sign Out
-    </Button>
+    <div className="space-y-3">
+      {/* Mode Switch Buttons - Only show for admin users */}
+      {isAdmin && (
+        <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
+          <p className="text-xs text-gray-500 mb-2">Admin Controls</p>
+          
+          {/* Buyer Mode Button */}
+          <Button
+            onClick={() => handleModeSwitch('buyer')}
+            variant="outline"
+            className="w-full text-sm bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+          >
+            <User className="w-4 h-4 mr-2" />
+            Switch to Buyer Dashboard
+          </Button>
+
+          {/* Admin Mode Button */}
+          <Button
+            onClick={() => handleModeSwitch('admin')}
+            variant="outline"
+            className="w-full text-sm bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Switch to Admin Dashboard
+          </Button>
+        </div>
+      )}
+
+      {/* Sign Out Button */}
+      <Button
+        onClick={signOut}
+        variant="outline"
+        className="w-full flex items-center justify-center hover:bg-gray-50"
+      >
+        <LogOut className="w-4 h-4 mr-2" />
+        Sign Out
+      </Button>
+    </div>
   );
 
   return (

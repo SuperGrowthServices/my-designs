@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/useUserRoles';
@@ -119,6 +118,7 @@ const VendorDashboard = () => {
       onTabChange={setActiveTab}
       userProfile={userProfile}
       onSwitchToBuyer={handleSwitchToBuyer}
+      isAdmin={isAdmin()}
     >
       {renderContent()}
     </VendorDashboardLayout>

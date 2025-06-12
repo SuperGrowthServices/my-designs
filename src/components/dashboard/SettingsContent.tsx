@@ -5,6 +5,7 @@ import { Settings } from '@/components/dashboard/Settings';
 import { Security } from '@/components/dashboard/Security';
 import { DeliveryAddresses } from '@/components/dashboard/DeliveryAddresses';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useUserRoles } from '@/hooks/useUserRoles'; // Add this import
 
 interface SettingsContentProps {
   userProfile: any;
@@ -19,7 +20,14 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   onShowVendorApplication,
   onSwitchToVendor
 }) => {
+  const { isAdmin } = useUserRoles(); // Add this hook
+
   const renderVendorSection = () => {
+    // If user is admin, don't show vendor section at all
+    if (isAdmin()) {
+      return null;
+    }
+
     const applicationStatus = userProfile?.application_status;
 
     if (applicationStatus === 'approved') {

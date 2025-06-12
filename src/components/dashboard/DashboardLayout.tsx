@@ -80,45 +80,29 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const footer = (
     <div className="space-y-3">
-      {/* Mode Switch Buttons for Admin */}
+      {/* Mode Switch Buttons - Only show for admin users */}
       {isAdmin() && (
         <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
-          <p className="text-xs text-gray-500 mb-2">Switch Dashboard Mode</p>
+          <p className="text-xs text-gray-500 mb-2">Admin Controls</p>
           
-          {/* Buyer Mode Button - Show if not in buyer dashboard */}
-          {currentDashboard !== 'buyer' && (
-            <Button
-              onClick={() => handleModeSwitch('buyer')}
-              variant="outline"
-              className="w-full text-sm bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-            >
-              <User className="w-4 h-4 mr-2" />
-              Buyer Mode
-            </Button>
-          )}
+          {/* Vendor Mode Button */}
+          <Button
+            onClick={() => handleModeSwitch('vendor')}
+            variant="outline"
+            className="w-full text-sm bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
+          >
+            🧰 Switch to Vendor Dashboard
+          </Button>
 
-          {/* Vendor Mode Button - Show if not in vendor dashboard */}
-          {currentDashboard !== 'vendor' && (
-            <Button
-              onClick={() => handleModeSwitch('vendor')}
-              variant="outline"
-              className="w-full text-sm bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
-            >
-              🧰 Vendor Mode
-            </Button>
-          )}
-
-          {/* Admin Mode Button - Show if not in admin dashboard */}
-          {currentDashboard !== 'admin' && (
-            <Button
-              onClick={() => handleModeSwitch('admin')}
-              variant="outline"
-              className="w-full text-sm bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Admin Mode
-            </Button>
-          )}
+          {/* Admin Mode Button */}
+          <Button
+            onClick={() => handleModeSwitch('admin')}
+            variant="outline"
+            className="w-full text-sm bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Switch to Admin Dashboard
+          </Button>
         </div>
       )}
 
