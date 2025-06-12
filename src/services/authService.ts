@@ -1,4 +1,4 @@
-
+import { AuthResult } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { ensureUserRecordsExist } from './userRecordService';
 
@@ -57,22 +57,22 @@ export const signUp = async (
   }
 };
 
-export const signIn = async (email: string, password: string) => {
+export const authSignIn = async (email: string, password: string): Promise<AuthResult> => {
   try {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
-    if (error) {
-      console.error('Sign in error:', error);
-      return { error };
-    }
-
-    return { error: null };
+    return {
+      data: data ? { user: data.user, session: data.session } : null,
+      error
+    };
   } catch (error) {
-    console.error('Unexpected signin error:', error);
-    return { error };
+    return {
+      data: null,
+      error: error as Error
+    };
   }
 };
 

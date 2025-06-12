@@ -14,6 +14,7 @@ import { PaymentConfirmation } from "./components/checkout/PaymentConfirmation";
 import { PaymentReceipt } from "./components/checkout/PaymentReceipt";
 import DashboardDesign from './pages/DashboardDesign';
 import VendorDesign from './pages/VendorDesign';
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -26,14 +27,47 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/vendor" element={<VendorDashboard />} />
-              <Route path="/admin" element={<AdminDashboardPage />} />
-              <Route path="/dashboarddesign" element={<DashboardDesign />} />
-              <Route path="/vendordesign" element={<VendorDesign />} />
-              <Route path="/checkout/:orderId" element={<CheckoutPage />} />
-              <Route path="/payment-success" element={<PaymentConfirmation />} />
-              <Route path="/receipt/:orderId" element={<PaymentReceipt />} />
+              
+              {/* Protected Buyer Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Protected Vendor Routes */}
+              <Route path="/vendor" element={
+                <ProtectedRoute allowedRoles={['vendor', 'admin']}>
+                  <VendorDashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Protected Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Other Protected Routes */}
+              <Route path="/checkout/:orderId" element={
+                <ProtectedRoute allowedRoles={['buyer', 'vendor', 'admin']}>
+                  <CheckoutPage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/payment-success" element={
+                <ProtectedRoute allowedRoles={['buyer', 'vendor', 'admin']}>
+                  <PaymentConfirmation />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/receipt/:orderId" element={
+                <ProtectedRoute allowedRoles={['buyer', 'vendor', 'admin']}>
+                  <PaymentReceipt />
+                </ProtectedRoute>
+              } />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { SignupConfirmationModal } from './SignupConfirmationModal';
+import { useNavigate } from 'react-router-dom';
+import { SignInResponse } from '@/types/auth';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [signupEmail, setSignupEmail] = useState('');
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -28,6 +30,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     whatsappNumber: '',
     location: ''
   });
+
+  const handleRoleBasedNavigation = (role: string) => {
+    switch (role) {
+      case 'admin':
+        navigate('/admin');
+        break;
+      case 'vendor':
+        navigate('/vendor');
+        break;
+      default:
+        navigate('/dashboard');
+        break;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,16 +73,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           onClose();
         }
       } else {
-        const { error } = await signIn(formData.email, formData.password);
+        const response: SignInResponse = await signIn(formData.email, formData.password);
         
-        if (error) {
+        if (response.error) {
           toast({
             title: "Error signing in",
-            description: error.message,
+            description: response.error.message,
             variant: "destructive"
           });
         } else {
           onClose();
+          // Check if role exists, default to 'buyer' if not
+          const userRole = response.role || 'buyer';
+          handleRoleBasedNavigation(userRole);
         }
       }
     } catch (error) {

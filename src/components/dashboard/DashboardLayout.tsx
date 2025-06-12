@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +13,7 @@ import {
   User,
   Shield
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,6 +22,7 @@ interface DashboardLayoutProps {
   userProfile?: any;
   showVendorSwitch?: boolean;
   onSwitchToVendor?: () => void;
+  currentDashboard: 'buyer' | 'vendor' | 'admin';  // Add this prop
 }
 
 const tabs = [
@@ -36,11 +37,27 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   activeTab,
   onTabChange,
   userProfile,
+  currentDashboard,  // Add this prop
   showVendorSwitch,
   onSwitchToVendor
 }) => {
   const { signOut } = useAuth();
   const { isAdmin } = useUserRoles();
+  const navigate = useNavigate();
+
+  const handleModeSwitch = (mode: 'buyer' | 'vendor' | 'admin') => {
+    switch (mode) {
+      case 'buyer':
+        navigate('/dashboard');
+        break;
+      case 'vendor':
+        navigate('/vendor');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+    }
+  };
 
   const sidebarItems = tabs.map(tab => ({
     id: tab.id,
@@ -63,29 +80,47 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const footer = (
     <div className="space-y-3">
-      {/* Mode Switch Buttons */}
-      <div className="space-y-2">
-        {showVendorSwitch && onSwitchToVendor && (
-          <Button
-            onClick={onSwitchToVendor}
-            variant="outline"
-            className="w-full text-sm bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
-          >
-            🧰 Vendor Mode
-          </Button>
-        )}
-        
-        {isAdmin() && (
-          <Button
-            onClick={() => window.location.href = '/admin'}
-            variant="outline"
-            className="w-full text-sm bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-          >
-            <Shield className="w-4 h-4 mr-2" />
-            Admin Panel
-          </Button>
-        )}
-      </div>
+      {/* Mode Switch Buttons for Admin */}
+      {isAdmin() && (
+        <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
+          <p className="text-xs text-gray-500 mb-2">Switch Dashboard Mode</p>
+          
+          {/* Buyer Mode Button - Show if not in buyer dashboard */}
+          {currentDashboard !== 'buyer' && (
+            <Button
+              onClick={() => handleModeSwitch('buyer')}
+              variant="outline"
+              className="w-full text-sm bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Buyer Mode
+            </Button>
+          )}
+
+          {/* Vendor Mode Button - Show if not in vendor dashboard */}
+          {currentDashboard !== 'vendor' && (
+            <Button
+              onClick={() => handleModeSwitch('vendor')}
+              variant="outline"
+              className="w-full text-sm bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
+            >
+              🧰 Vendor Mode
+            </Button>
+          )}
+
+          {/* Admin Mode Button - Show if not in admin dashboard */}
+          {currentDashboard !== 'admin' && (
+            <Button
+              onClick={() => handleModeSwitch('admin')}
+              variant="outline"
+              className="w-full text-sm bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Mode
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Sign Out Button */}
       <Button

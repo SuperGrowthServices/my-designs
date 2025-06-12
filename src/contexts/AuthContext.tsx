@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AuthContextType } from '@/types/auth';
 import { ensureUserRecordsExist } from '@/services/userRecordService';
-import { signUp as authSignUp, signIn as authSignIn, signOut as authSignOut } from '@/services/authService';
+import { signUp as authSignUp, authSignIn, signOut as authSignOut } from '@/services/authService';
+import { SignInResponse } from '@/types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -97,8 +98,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return authSignUp(email, password, fullName, whatsappNumber, location, toast);
   };
 
-  const signIn = async (email: string, password: string) => {
-    return authSignIn(email, password);
+  const signIn = async (email: string, password: string): Promise<SignInResponse> => {
+    try {
+      setLoading(true);
+      const result = await authSignIn(email, password);
+
+      // Handle case where result doesn't have data
+      if (!result.data?.user) {
+        return {
+          data: null,
+          error: result.error || new Error('No user data returned'),
+          role: undefined
+        };
+      }
+
+      // Fetch user role from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', result.data.user.id)
+        .single();
+
+      if (roleError) {
+        console.error('Error fetching user role:', roleError);
+        // Return successful auth but with default role
+        return {
+          data: result.data,
+          error: null,
+          role: 'buyer'
+        };
+      }
+
+      // Return successful result with role
+      return {
+        data: result.data,
+        error: null,
+        role: roleData?.role || 'buyer'
+      };
+      
+    } catch (error) {
+      console.error('SignIn error in AuthContext:', error);
+      return {
+        data: null,
+        error: error as Error,
+        role: undefined
+      };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signOut = async () => {
