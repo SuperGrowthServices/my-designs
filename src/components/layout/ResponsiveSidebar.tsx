@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface SidebarItem {
   id: string;
@@ -112,11 +112,56 @@ export const ResponsiveSidebar: React.FC<ResponsiveSidebarProps> = ({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="w-64 lg:w-72 flex-shrink-0">
-        <SidebarContent />
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+        <div className="flex flex-col flex-grow border-r border-gray-200 bg-white">
+          {/* Make this div flex with column direction and full height */}
+          <div className="flex flex-col h-full">
+            {/* Logo section */}
+            <div className="flex-shrink-0 px-4 py-4 flex flex-col items-center border-b border-gray-200">
+              <span className="text-lg font-semibold">{title}</span>
+              <span className="text-sm text-gray-500">{subtitle}</span>
+            </div>
+
+            {/* Header section */}
+            {header && (
+              <div className="flex-shrink-0">
+                {header}
+              </div>
+            )}
+
+            {/* Navigation - make it scrollable */}
+            <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+              {items.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={item.onClick}
+                  className={cn(
+                    "flex items-center w-full px-4 py-2 text-sm rounded-md",
+                    item.isActive
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  )}
+                >
+                  {item.icon && <item.icon className="w-5 h-5 mr-3" />}
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+
+            {/* Footer - make it stick to bottom */}
+            {footer && (
+              <div className="flex-shrink-0 p-4 border-t border-gray-200">
+                {footer}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
+
+      {/* Main content */}
+      <div className="md:pl-64 flex flex-col flex-1">
         {children}
       </div>
     </div>

@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { ResponsiveSidebar } from '@/components/layout/ResponsiveSidebar';
-import { Home, Users, FileText, Settings, LogOut, Package, History, Truck } from 'lucide-react';
+import { Home, Users, FileText, Settings, LogOut, Package, History, Truck, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export type AdminTabId = 'overview' | 'users' | 'applications' | 'orders' | 'logistics' | 'logs';
 
@@ -29,6 +30,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const { user, signOut } = useAuth();
   const { isVendor } = useUserRoles();
+  const navigate = useNavigate();  // Add this
+
+  const handleModeSwitch = (mode: 'buyer' | 'vendor') => {
+    switch (mode) {
+      case 'buyer':
+        navigate('/dashboard');
+        break;
+      case 'vendor':
+        navigate('/vendor');
+        break;
+    }
+  };
 
   const sidebarItems = tabs.map(tab => ({
     id: tab.id,
@@ -43,34 +56,45 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <div className='text-center text-sm p-2 bg-red-50 text-red-700 rounded-md'>
         Admin: {user?.email}
       </div>
-      <Button
-        onClick={() => window.location.href = '/dashboard'}
-        variant="outline"
-        className="w-full text-sm"
-      >
-        Buyer Mode
-      </Button>
-      {isVendor() && (
-        <Button
-          onClick={() => window.location.href = '/vendor'}
-          variant="outline"
-          className="w-full text-sm"
-        >
-          Vendor Mode
-        </Button>
-      )}
     </div>
   );
 
   const footer = (
-    <Button
-      onClick={signOut}
-      variant="outline"
-      className="w-full flex items-center justify-center"
-    >
-      <LogOut className="w-4 h-4 mr-2" />
-      Sign Out
-    </Button>
+    <div className="space-y-3">
+      {/* Mode Switch Buttons */}
+      <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
+        <p className="text-xs text-gray-500 mb-2">Switch Dashboard</p>
+        
+        {/* Buyer Mode Button */}
+        <Button
+          onClick={() => handleModeSwitch('buyer')}
+          variant="outline"
+          className="w-full text-sm bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+        >
+          <User className="w-4 h-4 mr-2" />
+          Buyer Mode
+        </Button>
+
+        {/* Vendor Mode Button */}
+        <Button
+          onClick={() => handleModeSwitch('vendor')}
+          variant="outline"
+          className="w-full text-sm bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100"
+        >
+          🧰 Vendor Mode
+        </Button>
+      </div>
+
+      {/* Sign Out Button */}
+      <Button
+        onClick={signOut}
+        variant="outline"
+        className="w-full flex items-center justify-center hover:bg-gray-50"
+      >
+        <LogOut className="w-4 h-4 mr-2" />
+        Sign Out
+      </Button>
+    </div>
   );
 
   return (
@@ -88,4 +112,4 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       </main>
     </ResponsiveSidebar>
   );
-}; 
+};
