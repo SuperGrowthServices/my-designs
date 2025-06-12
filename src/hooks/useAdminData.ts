@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Tables } from '@/types/database';
+import type { Database} from '../types/supabase'; // adjust path if needed
 
+// Utility type
+type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
+
+// Types
 export type Order = Tables<'orders'> & { customer_name: string };
 export type UserProfile = Tables<'user_profiles'>;
 export type User = {
@@ -20,6 +24,14 @@ export interface PlatformStats {
   total_vendors: number;
   total_buyers: number;
   total_orders: number;
+}
+
+// Add this interface to type the RPC response
+interface AdminDataResponse {
+  platform_stats: PlatformStats;
+  all_orders: Order[];
+  all_users: User[];
+  vendor_applications: UserProfile[];
 }
 
 export interface AdminData {
@@ -52,18 +64,24 @@ export const useAdminData = (): AdminData => {
     setError(null);
     try {
       const { data, error } = await supabase.rpc('get_admin_data');
+
       if (error) throw error;
-      
-      const result = data[0];
-      if (result) {
-        setStats(result.platform_stats || initialStats);
-        setOrders(result.all_orders || []);
-        setUsers(result.all_users || []);
-        setVendorApplications(result.vendor_applications || []);
-      }
+
+      // Type the result properly
+      const result = (data?.[0] ?? {}) as AdminDataResponse;
+
+      setStats(
+        typeof result.platform_stats === 'object' && result.platform_stats !== null
+          ? result.platform_stats
+          : initialStats
+      );
+
+      setOrders(Array.isArray(result.all_orders) ? result.all_orders : []);
+      setUsers(Array.isArray(result.all_users) ? result.all_users : []);
+      setVendorApplications(Array.isArray(result.vendor_applications) ? result.vendor_applications : []);
     } catch (err: any) {
-      setError(err);
       console.error("Error fetching admin data:", err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -82,4 +100,4 @@ export const useAdminData = (): AdminData => {
     error,
     refresh: fetchData,
   };
-}; 
+};
