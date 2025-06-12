@@ -100,7 +100,7 @@ export const useAdminData = (): AdminData => {
         application_status,
         application_submitted_at
       `)
-      .not('application_status', 'eq', 'not_applied')
+      .neq('application_status', 'not_applied')
       .order('application_submitted_at', { ascending: false });
 
     if (error) throw error;
