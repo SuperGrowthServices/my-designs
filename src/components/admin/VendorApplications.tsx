@@ -20,11 +20,16 @@ import { MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
+import { RejectionDialog } from './RejectionDialog';
 
 export const VendorApplications: React.FC = () => {
   const { vendorApplications, refresh: refetchVendorApplications } = useAdminData();
   const [loadingStates, setLoadingStates] = useState<{ [key: string]: boolean }>({});
   const { toast } = useToast();
+  const [rejectionDialog, setRejectionDialog] = useState({
+    isOpen: false,
+    userId: null as string | null
+  });
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {  // Case-insensitive check
@@ -109,29 +114,27 @@ export const VendorApplications: React.FC = () => {
   };
 
   const handleReject = async (user_id: string) => {
-    console.log('Attempting to reject application for user_id:', user_id);
-    
-    if (!user_id) {
-      console.error('Invalid user_id:', user_id);
-      toast({
-        title: "Error",
-        description: "Invalid user ID. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Open rejection dialog instead of immediate rejection
+    setRejectionDialog({
+      isOpen: true,
+      userId: user_id
+    });
+  };
+
+  const handleConfirmReject = async (reason: string) => {
+    const user_id = rejectionDialog.userId;
+    if (!user_id) return;
 
     setLoadingStates(prev => ({ ...prev, [user_id]: true }));
     
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('user_profiles')
-        .update({ application_status: 'rejected' })
-        .eq('user_id', user_id)
-        .select()
-        .single();
-
-      console.log('Rejection update result:', { data, error });
+        .update({ 
+          application_status: 'rejected',
+          rejection_reason: reason 
+        })
+        .eq('user_id', user_id);
 
       if (error) throw error;
 
@@ -151,6 +154,7 @@ export const VendorApplications: React.FC = () => {
       });
     } finally {
       setLoadingStates(prev => ({ ...prev, [user_id]: false }));
+      setRejectionDialog({ isOpen: false, userId: null });
     }
   };
 
@@ -195,6 +199,10 @@ export const VendorApplications: React.FC = () => {
     return null;
   };
 
+  const filteredApplications = vendorApplications.filter(
+    app => app.application_status !== 'not_applied'
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -215,7 +223,7 @@ export const VendorApplications: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendorApplications.map((app) => (
+            {filteredApplications.map((app) => (
               <TableRow key={app.id}>
                 <TableCell className="font-medium">{app.business_name || 'N/A'}</TableCell>
                 <TableCell>{app.full_name}</TableCell>
@@ -235,6 +243,12 @@ export const VendorApplications: React.FC = () => {
           </TableBody>
         </Table>
       </div>
+      <RejectionDialog
+        isOpen={rejectionDialog.isOpen}
+        onClose={() => setRejectionDialog({ isOpen: false, userId: null })}
+        onConfirm={handleConfirmReject}
+        loading={rejectionDialog.userId ? loadingStates[rejectionDialog.userId] : false}
+      />
     </div>
   );
 };
