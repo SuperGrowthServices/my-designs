@@ -161,6 +161,7 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
           bank_iban: formData.bank_iban,
           application_status: 'pending',
           application_submitted_at: new Date().toISOString(),
+          user_id:user.id
         })
         .eq('id', user.id);
 
