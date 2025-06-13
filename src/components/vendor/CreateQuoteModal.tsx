@@ -22,8 +22,6 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
   onClose,
   onAddQuote
 }) => {
-  const { toast } = useToast();
-  
   if (!part) return null;
 
   const [price, setPrice] = useState('');
@@ -154,6 +152,7 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
       toast({
         title: "Quote Submitted!",
         description: "Your quote has been successfully submitted",
+        variant: "success"
       });
     } catch (error: any) {
       console.error('Error submitting quote:', error);
@@ -203,7 +202,7 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
     >
       <div className="fixed inset-0 bg-black/70" />
       <div 
-        className="relative z-[201] bg-white rounded-xl shadow-2xl w-full max-w-md m-4 p-6"
+        className="relative bg-white rounded-xl shadow-2xl w-full max-w-md m-4 p-6 overflow-visible"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
@@ -240,17 +239,16 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Condition *</label>
+          <div className="space-y-2 relative">
+            <label className="text-sm font-medium">Condition</label>
             <Select 
               value={condition}
-              onValueChange={handleConditionChange}
-              disabled={isSubmitting}
+              onValueChange={(value: QuoteCondition) => setCondition(value)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder="Select condition" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[300]">
                 <SelectItem value="New">New</SelectItem>
                 <SelectItem value="Used - Excellent">Used - Excellent</SelectItem>
                 <SelectItem value="Used - Good">Used - Good</SelectItem>
@@ -259,17 +257,16 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Warranty *</label>
+          <div className="space-y-2 relative">
+            <label className="text-sm font-medium">Warranty</label>
             <Select 
               value={warranty}
-              onValueChange={handleWarrantyChange}
-              disabled={isSubmitting}
+              onValueChange={(value: QuoteWarranty) => setWarranty(value)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder="Select warranty" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[300]">
                 <SelectItem value="No Warranty">No Warranty</SelectItem>
                 <SelectItem value="3 Days">3 Days</SelectItem>
                 <SelectItem value="7 Days">7 Days</SelectItem>
@@ -354,4 +351,8 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
       </div>
     </div>
   );
+};
+
+const toast = ({ title, description, variant }: { title: string; description: string; variant: string }) => {
+    console.log(`[${variant.toUpperCase()}] ${title}: ${description}`);
 };
