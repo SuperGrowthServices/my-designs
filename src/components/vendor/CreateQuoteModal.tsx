@@ -33,35 +33,6 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
 
-  console.log('Initial condition state:', condition);
-  console.log('Initial warranty state:', warranty);
-
-  const handleConditionChange = (value: string) => {
-    console.log('Condition selected:', value);
-    const newCondition = value as QuoteCondition;
-    console.log('Setting condition to:', newCondition);
-    setCondition(newCondition);
-    console.log('Condition after set:', newCondition); // Note: state updates are async
-  };
-
-  const handleWarrantyChange = (value: string) => {
-    console.log('Warranty selected:', value);
-    const newWarranty = value as QuoteWarranty;
-    console.log('Setting warranty to:', newWarranty);
-    setWarranty(newWarranty);
-    console.log('Warranty after set:', newWarranty); // Note: state updates are async
-  };
-
-  // Add useEffect to track state changes
-  React.useEffect(() => {
-    console.log('Current condition state:', condition);
-  }, [condition]);
-
-  React.useEffect(() => {
-    console.log('Current warranty state:', warranty);
-  }, [warranty]);
-
-
   const handleSubmit = async () => {
     if (!price) {
       toast({
