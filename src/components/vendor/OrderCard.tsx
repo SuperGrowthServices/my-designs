@@ -153,11 +153,6 @@ export const OrderCard: React.FC<OrderCardProps> = ({
             {order.parts.map(part => (
               <div key={part.id} className="flex items-center justify-between text-sm">
                 <div className="text-gray-600 truncate">{part.part_name}</div>
-                {part.other_bids_count > 0 && (
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    {part.other_bids_count} other bid{part.other_bids_count !== 1 ? 's' : ''}
-                  </Badge>
-                )}
               </div>
             ))}
           </div>
