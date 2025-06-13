@@ -232,14 +232,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-0 py-4 border-b">
             <DialogTitle>
               {isSignUp ? 'Create Account' : 'Sign In'}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="overflow-y-auto pr-1"> {/* Add padding-right to account for scrollbar */}
+          <div className="flex-1 px-6 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -270,7 +270,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
               </Button>
             </form>
 
-            <div className="text-center mt-4">
+            <div className="text-center mt-6 pb-2">
               <Button variant="link" onClick={toggleMode}>
                 {isSignUp 
                   ? 'Already have an account? Sign in' 
