@@ -163,7 +163,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
     return (
       <>
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name</Label>
+          <Label htmlFor="fullName">
+            Full Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="fullName"
             value={formData.fullName}
@@ -173,7 +175,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+          <Label htmlFor="whatsappNumber">
+            WhatsApp Number <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="whatsappNumber"
             value={formData.whatsappNumber}
@@ -183,7 +187,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
+          <Label htmlFor="location">
+            Location <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="location"
             value={formData.location}
@@ -195,7 +201,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
         {signupType === 'vendor' && (
           <>
             <div className="space-y-2">
-              <Label htmlFor="business_name">Business Name</Label>
+              <Label htmlFor="google_maps_url">Google Maps URL</Label>
+              <Input
+                id="google_maps_url"
+                type="url"
+                placeholder="https://maps.google.com/..."
+                value={formData.google_maps_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, google_maps_url: e.target.value }))}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Add your business location on Google Maps (optional)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="business_name">
+                Business Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="business_name"
                 value={formData.business_name}
@@ -210,7 +232,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
                 id="bank_name"
                 value={formData.bank_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, bank_name: e.target.value }))}
-                required
               />
             </div>
 
@@ -220,9 +241,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
                 id="bank_iban"
                 value={formData.bank_iban}
                 onChange={(e) => setFormData(prev => ({ ...prev, bank_iban: e.target.value }))}
-                required
               />
             </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              <span className="text-red-500">*</span> Required fields
+            </p>
           </>
         )}
       </>
