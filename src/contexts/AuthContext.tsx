@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AuthContextType } from '@/types/auth';
 import { ensureUserRecordsExist } from '@/services/userRecordService';
 import { signUp as authSignUp, authSignIn, signOut as authSignOut } from '@/services/authService';
-import { SignInResponse } from '@/types/auth';
+import { SignInResponse, SignUpData } from '@/types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -94,8 +94,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 }, []);
 
 
-  const signUp = async (email: string, password: string, fullName: string, whatsappNumber: string, location: string) => {
-    return authSignUp(email, password, fullName, whatsappNumber, location, toast);
+  const signUp = async (data: SignUpData) => {
+    return authSignUp(data);
   };
 
   const signIn = async (email: string, password: string): Promise<SignInResponse> => {

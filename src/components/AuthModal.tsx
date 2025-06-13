@@ -12,10 +12,11 @@ import { SignInResponse } from '@/types/auth';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  signupType?: 'buyer' | 'vendor';
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const [isSignUp, setIsSignUp] = useState(false);
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupType }) => {
+  const [isSignUp, setIsSignUp] = useState(signupType ? true : false);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [signupEmail, setSignupEmail] = useState('');
@@ -23,12 +24,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Expanded form data for vendor fields
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
     whatsappNumber: '',
-    location: ''
+    location: '',
+    // Vendor specific fields
+    business_name: '',
+    bank_name: '',
+    bank_iban: '',
+    pickup_name: '',
+    pickup_address: '',
+    pickup_phone: '',
+    pickup_instructions: '',
+    google_maps_url: '',
+    vendor_tags: [] as string[]
   });
 
   const handleRoleBasedNavigation = (role: string) => {
@@ -51,13 +63,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
     try {
       if (isSignUp) {
-        const { error, needsConfirmation } = await signUp(
-          formData.email,
-          formData.password,
-          formData.fullName,
-          formData.whatsappNumber,
-          formData.location
-        );
+        const vendorData = signupType === 'vendor' ? {
+          business_name: formData.business_name,
+          bank_name: formData.bank_name,
+          bank_iban: formData.bank_iban,
+          vendor_tags: [], 
+          application_status: 'pending',
+          application_submitted_at: new Date().toISOString(),
+          role: 'vendor' as const
+        } : {
+          role: 'buyer' as const
+        };
+
+        const { error, needsConfirmation } = await signUp({
+          email: formData.email,
+          password: formData.password,
+          userData: {
+            full_name: formData.fullName,
+            whatsapp_number: formData.whatsappNumber,
+            location: formData.location,
+            ...vendorData
+          }
+        });
 
         if (error) {
           toast({
@@ -71,6 +98,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           onClose();
         } else {
           onClose();
+          if (signupType === 'vendor') {
+            navigate('/vendor/pending');
+          } else {
+            navigate('/dashboard');
+          }
         }
       } else {
         const response: SignInResponse = await signIn(formData.email, formData.password);
@@ -88,10 +120,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           handleRoleBasedNavigation(userRole);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Unexpected error",
-        description: "Please try again later.",
+        description: error.message || "Please try again later.",
         variant: "destructive"
       });
     } finally {
@@ -105,7 +137,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       password: '',
       fullName: '',
       whatsappNumber: '',
-      location: ''
+      location: '',
+      // Vendor specific fields
+      business_name: '',
+      bank_name: '',
+      bank_iban: '',
+      pickup_name: '',
+      pickup_address: '',
+      pickup_phone: '',
+      pickup_instructions: '',
+      google_maps_url: '',
+      vendor_tags: [] as string[]
     });
   };
 
@@ -114,85 +156,128 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     resetForm();
   };
 
+  // Render different form fields based on signup type
+  const renderSignupFields = () => {
+    if (!isSignUp) return null;
+
+    return (
+      <>
+        <div className="space-y-2">
+          <Label htmlFor="fullName">Full Name</Label>
+          <Input
+            id="fullName"
+            value={formData.fullName}
+            onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+          <Input
+            id="whatsappNumber"
+            value={formData.whatsappNumber}
+            onChange={(e) => setFormData(prev => ({ ...prev, whatsappNumber: e.target.value }))}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            value={formData.location}
+            onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+            required
+          />
+        </div>
+
+        {signupType === 'vendor' && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="business_name">Business Name</Label>
+              <Input
+                id="business_name"
+                value={formData.business_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bank_name">Bank Name</Label>
+              <Input
+                id="bank_name"
+                value={formData.bank_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, bank_name: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bank_iban">UAE Bank Account (IBAN)</Label>
+              <Input
+                id="bank_iban"
+                value={formData.bank_iban}
+                onChange={(e) => setFormData(prev => ({ ...prev, bank_iban: e.target.value }))}
+                required
+              />
+            </div>
+          </>
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isSignUp ? 'Create Account' : 'Sign In'}
             </DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                required
-              />
+          <div className="overflow-y-auto pr-1"> {/* Add padding-right to account for scrollbar */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  required
+                />
+              </div>
+
+              {renderSignupFields()}
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
+              </Button>
+            </form>
+
+            <div className="text-center mt-4">
+              <Button variant="link" onClick={toggleMode}>
+                {isSignUp 
+                  ? 'Already have an account? Sign in' 
+                  : "Don't have an account? Sign up"
+                }
+              </Button>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                required
-              />
-            </div>
-
-            {isSignUp && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
-                  <Input
-                    id="whatsappNumber"
-                    value={formData.whatsappNumber}
-                    onChange={(e) => setFormData(prev => ({ ...prev, whatsappNumber: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    required
-                  />
-                </div>
-              </>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
-            </Button>
-          </form>
-
-          <div className="text-center">
-            <Button variant="link" onClick={toggleMode}>
-              {isSignUp 
-                ? 'Already have an account? Sign in' 
-                : "Don't have an account? Sign up"
-              }
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
