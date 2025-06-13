@@ -46,7 +46,7 @@ const Header = ({ onLoginClick }: { onLoginClick: () => void }) => (
         </div>
         <div className="hidden md:flex items-center space-x-4">
           <Button variant="ghost" onClick={onLoginClick}>
-            <Wrench className="mr-2 h-4 w-4" />Login / Sign Up
+            <Wrench className="mr-2 h-4 w-4" />Login
           </Button>
           <div className="border-l border-gray-300 h-6"></div>
           <span className="text-sm text-gray-500">🇦🇪 UAE</span>
@@ -59,40 +59,54 @@ const Header = ({ onLoginClick }: { onLoginClick: () => void }) => (
   </header>
 );
 
-const HeroSection = () => (
-    <section className="relative text-white py-20 lg:py-28 overflow-hidden">
-        <div className="absolute inset-0">
-            <div 
-                className="absolute inset-0 bg-cover bg-center blur-sm"
-                style={{ backgroundImage: `url('/assets/heroimagenew.png')` }}
-            />
-            <div 
-                className="absolute inset-0"
-                style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.3) 100%)` }}
-            />
-        </div>
+const HeroSection = () => {
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.6)]">
-                Get The Right Car Parts — Fast.
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-200 mb-8 max-w-3xl mx-auto [text-shadow:0_2px_4px_rgba(0,0,0,0.6)]">
-                Find parts, compare prices, and get fast delivery from trusted UAE suppliers.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg font-semibold shadow-xl hover:shadow-2xl transition-transform duration-200 ease-in-out transform hover:scale-105 w-full sm:w-auto [text-shadow:0_2px_4px_rgba(0,0,0,0.6)]">
-                    <Search className="mr-3 h-5 w-5" />Find My Car Parts
-                </Button>
+    return (
+        <section className="relative text-white py-20 lg:py-28 overflow-hidden">
+            <div className="absolute inset-0">
+                <div 
+                    className="absolute inset-0 bg-cover bg-center blur-sm"
+                    style={{ backgroundImage: `url('/assets/heroimagenew.png')` }}
+                />
+                <div 
+                    className="absolute inset-0"
+                    style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.3) 100%)` }}
+                />
             </div>
-            <p className="text-gray-300 mt-6 text-sm flex items-center justify-center">
-                <ShieldCheck className="mr-2 h-4 w-4 text-green-400" />
-                <span className="[text-shadow:0_2px_4px_rgba(0,0,0,0.6)]">
-                    Trusted by 500+ UAE garages and workshops.
-                </span>
-            </p>
-        </div>
-    </section>
-);
+
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.6)]">
+                    Get The Right Car Parts — Fast.
+                </h1>
+                <p className="text-lg sm:text-xl text-gray-200 mb-8 max-w-3xl mx-auto [text-shadow:0_2px_4px_rgba(0,0,0,0.6)]">
+                    Find parts, compare prices, and get fast delivery from trusted UAE suppliers.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <Button 
+                        size="lg" 
+                        className="bg-blue-600 hover:bg-blue-700 text-lg font-semibold shadow-xl hover:shadow-2xl transition-transform duration-200 ease-in-out transform hover:scale-105 w-full sm:w-auto [text-shadow:0_2px_4px_rgba(0,0,0,0.6)]"
+                        onClick={() => setShowAuthModal(true)}
+                    >
+                        <Search className="mr-3 h-5 w-5" />Find My Car Parts
+                    </Button>
+                </div>
+                <p className="text-gray-300 mt-6 text-sm flex items-center justify-center">
+                    <ShieldCheck className="mr-2 h-4 w-4 text-green-400" />
+                    <span className="[text-shadow:0_2px_4px_rgba(0,0,0,0.6)]">
+                        Trusted by 500+ UAE garages and workshops.
+                    </span>
+                </p>
+            </div>
+
+            <AuthModal 
+                isOpen={showAuthModal} 
+                onClose={() => setShowAuthModal(false)}
+                signupType="buyer" // Default to buyer signup for this button
+            />
+        </section>
+    );
+};
 
 const StatsSection = () => {
     const stats = [
