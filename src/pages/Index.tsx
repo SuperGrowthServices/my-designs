@@ -289,68 +289,107 @@ const CarBrandsSection = () => {
     );
 };
 
-const CTACard = ({ icon, title, description, buttonText, buttonVariant, subtext, isBuyer }: { 
-    icon: React.ReactNode, 
-    title: string, 
-    description: string[], 
-    buttonText: string, 
-    buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" | null | undefined, 
-    subtext: string,
-    isBuyer: boolean 
+interface CTACardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string[];
+  buttonText: string;
+  buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" | null | undefined;
+  subtext: string;
+  isBuyer: boolean;
+  onClick: () => void; // Add this line
+}
+
+const CTACard: React.FC<CTACardProps> = ({ 
+  icon, 
+  title, 
+  description, 
+  buttonText, 
+  buttonVariant, 
+  subtext, 
+  isBuyer,
+  onClick // Add this line
 }) => (
-    <div className="bg-white rounded-lg shadow-xl p-8 text-center transition-transform transform hover:-translate-y-2 flex flex-col h-full">
-        <div className="flex-grow">
-            <div className={`inline-block p-4 rounded-full mb-6 ${isBuyer ? 'bg-blue-100' : 'bg-green-100'}`}>
-                {icon}
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">{title}</h3>
-            <div className="space-y-2 text-gray-600 mb-6">
-                {description.map((line, index) => <p key={index}>{line}</p>)}
-            </div>
+  <div className="bg-white rounded-lg shadow-xl p-8 text-center transition-transform transform hover:-translate-y-2 flex flex-col h-full">
+    <div className="flex-grow">
+        <div className={`inline-block p-4 rounded-full mb-6 ${isBuyer ? 'bg-blue-100' : 'bg-green-100'}`}>
+            {icon}
         </div>
-        <div className="mt-auto">
-            <Button size="lg" variant={buttonVariant} className="w-full sm:w-auto">{buttonText}</Button>
-            <p className="text-xs text-gray-500 mt-2">{subtext}</p>
+        <h3 className="text-2xl font-bold text-gray-900 mb-4">{title}</h3>
+        <div className="space-y-2 text-gray-600 mb-6">
+            {description.map((line, index) => <p key={index}>{line}</p>)}
         </div>
     </div>
+    <div className="mt-auto">
+      <Button 
+        size="lg" 
+        variant={buttonVariant} 
+        className="w-full sm:w-auto"
+        onClick={onClick} // Add this line
+      >
+        {buttonText}
+      </Button>
+      <p className="text-xs text-gray-500 mt-2">{subtext}</p>
+    </div>
+  </div>
 );
 
-const DualCTASection = () => (
+const DualCTASection = () => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [signupType, setSignupType] = useState<'buyer' | 'vendor' | null>(null);
+
+  const handleCTAClick = (type: 'buyer' | 'vendor') => {
+    setSignupType(type);
+    setShowAuthModal(true);
+  };
+
+  return (
     <section className="bg-white py-12 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 items-stretch">
-                <CTACard
-                    isBuyer={true}
-                    icon={<Wrench className="h-10 w-10 text-blue-600" />}
-                    title="For Garages & Repair Shops"
-                    description={[
-                        "Find the parts you need.",
-                        "Get quotes fast.",
-                        "Pay online.",
-                        "Fast delivery."
-                    ]}
-                    buttonText="Start Buying Parts"
-                    subtext="Free to join — No monthly fees"
-                    buttonVariant="default"
-                />
-                <CTACard
-                    isBuyer={false}
-                    icon={<Store className="h-10 w-10 text-green-600" />}
-                    title="For Parts Suppliers"
-                    description={[
-                        "Get more orders.",
-                        "Receive buyer requests daily.",
-                        "Sell your stock easily.",
-                        "Fast payouts."
-                    ]}
-                    buttonText="Start Selling Parts"
-                    subtext="Low fees — Fast payments"
-                    buttonVariant="secondary"
-                />
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-stretch">
+          <CTACard
+            isBuyer={true}
+            icon={<Wrench className="h-10 w-10 text-blue-600" />}
+            title="For Garages & Repair Shops"
+            description={[
+                "Find the parts you need.",
+                "Get quotes fast.",
+                "Pay online.",
+                "Fast delivery."
+            ]}
+            buttonText="Start Buying Parts"
+            subtext="Free to join — No monthly fees"
+            buttonVariant="default"
+            onClick={() => handleCTAClick('buyer')}
+          />
+          <CTACard
+            isBuyer={false}
+            icon={<Store className="h-10 w-10 text-green-600" />}
+            title="For Parts Suppliers"
+            description={[
+                "Get more orders.",
+                "Receive buyer requests daily.",
+                "Sell your stock easily.",
+                "Fast payouts."
+            ]}
+            buttonText="Start Selling Parts"
+            subtext="Low fees — Fast payments"
+            buttonVariant="secondary"
+            onClick={() => handleCTAClick('vendor')}
+          />
         </div>
+      </div>
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => {
+          setShowAuthModal(false);
+          setSignupType(null);
+        }}
+        signupType={signupType}
+      />
     </section>
-);
+  );
+};
 
 const TestimonialCard = ({ text, author }: { text: string, author: string }) => (
     <Card className="text-center p-6 bg-white shadow-lg h-full flex flex-col">
@@ -469,4 +508,4 @@ export const HomeDesign = () => {
             <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
         </div>
     );
-}; 
+};
