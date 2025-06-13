@@ -49,6 +49,7 @@ export type Database = {
       }
       bids: {
         Row: {
+          condition: Database["public"]["Enums"]["quote_condition"]
           created_at: string
           id: string
           image_url: string | null
@@ -59,8 +60,10 @@ export type Database = {
           status: Database["public"]["Enums"]["bid_status"]
           updated_at: string
           vendor_id: string
+          warranty: Database["public"]["Enums"]["quote_warranty"]
         }
         Insert: {
+          condition?: Database["public"]["Enums"]["quote_condition"]
           created_at?: string
           id?: string
           image_url?: string | null
@@ -71,8 +74,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["bid_status"]
           updated_at?: string
           vendor_id: string
+          warranty?: Database["public"]["Enums"]["quote_warranty"]
         }
         Update: {
+          condition?: Database["public"]["Enums"]["quote_condition"]
           created_at?: string
           id?: string
           image_url?: string | null
@@ -83,6 +88,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["bid_status"]
           updated_at?: string
           vendor_id?: string
+          warranty?: Database["public"]["Enums"]["quote_warranty"]
         }
         Relationships: [
           {
@@ -584,7 +590,7 @@ export type Database = {
           {
             foreignKeyName: "user_roles_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -929,6 +935,17 @@ export type Database = {
         | "ready_for_checkout"
         | "completed"
       payment_status: "unpaid" | "paid" | "failed"
+      quote_condition:
+        | "New"
+        | "Used - Excellent"
+        | "Used - Good"
+        | "Used - Fair"
+      quote_warranty:
+        | "No Warranty"
+        | "3 Days"
+        | "7 Days"
+        | "14 Days"
+        | "30 Days"
       refund_status: "pending" | "approved" | "rejected" | "processed"
       role_type: "buyer" | "vendor" | "admin"
       user_role: "buyer" | "vendor" | "admin" | "delivery_driver"
@@ -1060,6 +1077,13 @@ export const Constants = {
         "completed",
       ],
       payment_status: ["unpaid", "paid", "failed"],
+      quote_condition: [
+        "New",
+        "Used - Excellent",
+        "Used - Good",
+        "Used - Fair",
+      ],
+      quote_warranty: ["No Warranty", "3 Days", "7 Days", "14 Days", "30 Days"],
       refund_status: ["pending", "approved", "rejected", "processed"],
       role_type: ["buyer", "vendor", "admin"],
       user_role: ["buyer", "vendor", "admin", "delivery_driver"],
