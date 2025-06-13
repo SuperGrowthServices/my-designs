@@ -41,15 +41,15 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ className, orders, loading, 
   const ordersWithAcceptedBids = orders.filter(order => order.hasAcceptedBids);
 
   return (
-    <div className={cn("space-y-6", className)}>
-      {/* {ordersWithAcceptedBids.length > 0 && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            You have {ordersWithAcceptedBids.length} order{ordersWithAcceptedBids.length !== 1 ? 's' : ''} ready for checkout!
-          </AlertDescription>
-        </Alert>
-      )} */}
+    // <div className={cn("space-y-6", className)}>
+    //   {/* {ordersWithAcceptedBids.length > 0 && (
+    //     <Alert className="border-green-200 bg-green-50">
+    //       <CheckCircle className="h-4 w-4 text-green-600" />
+    //       <AlertDescription className="text-green-800">
+    //         You have {ordersWithAcceptedBids.length} order{ordersWithAcceptedBids.length !== 1 ? 's' : ''} ready for checkout!
+    //       </AlertDescription>
+    //     </Alert>
+    //   )} */}
 
       <div className="space-y-6">
         {orders.map((order) => (
@@ -60,7 +60,5 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ className, orders, loading, 
             onBidUpdate={refetchOrders}
           />
         ))}
-      </div>
-    </div>
-  );
+      </div>  );
 };
