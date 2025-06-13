@@ -126,7 +126,7 @@ export const OrderCard_Design: React.FC<OrderCardProps> = ({ order, onUpdateOrde
               </div>
               <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
                 <span>Order {order.orderId}</span>
-                <Badge variant="secondary">{totalParts} Parts Requested</Badge>
+                <Badge variant="primary">{totalParts} Parts Requested</Badge>
                 <Badge variant="secondary">{totalPendingQuotes} Pending Quotes</Badge>
               </div>
             </div>

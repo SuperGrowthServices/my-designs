@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,8 +41,8 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
     google_maps_url: '',
     
     // Bank Details
-    bank_name: userProfile?.bank_name || '',
-    bank_iban: userProfile?.bank_iban || ''
+    bank_name: '',
+    bank_iban: ''
   });
 
   useEffect(() => {
@@ -161,7 +160,7 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
           bank_iban: formData.bank_iban,
           application_status: 'pending',
           application_submitted_at: new Date().toISOString(),
-          user_id:user.id
+          user_id: user.id
         })
         .eq('id', user.id);
 
@@ -297,37 +296,39 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
             <div className="flex items-center gap-2 mb-4">
               <MapPin className="w-5 h-5" />
               <h3 className="text-lg font-semibold">Primary Pickup Address</h3>
-              <span className="text-sm text-gray-500">(Optional - can be added later)</span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="pickup_name">Location Name</Label>
+                <Label htmlFor="pickup_name">Location Name *</Label>
                 <Input
                   id="pickup_name"
                   value={formData.pickup_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, pickup_name: e.target.value }))}
                   placeholder="e.g., Main Workshop"
+                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="pickup_phone">Phone Number</Label>
+                <Label htmlFor="pickup_phone">Phone Number *</Label>
                 <Input
                   id="pickup_phone"
                   value={formData.pickup_phone}
                   onChange={(e) => setFormData(prev => ({ ...prev, pickup_phone: e.target.value }))}
                   placeholder="Contact number for this location"
+                  required
                 />
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="pickup_address">Address</Label>
+                <Label htmlFor="pickup_address">Address *</Label>
                 <Textarea
                   id="pickup_address"
                   value={formData.pickup_address}
                   onChange={(e) => setFormData(prev => ({ ...prev, pickup_address: e.target.value }))}
                   placeholder="Enter complete address"
+                  required
                 />
               </div>
 
@@ -358,28 +359,27 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
             <div className="flex items-center gap-2 mb-4">
               <CreditCard className="w-5 h-5" />
               <h3 className="text-lg font-semibold">Bank Details</h3>
+              <span className="text-sm text-gray-500">(Optional - can be added later)</span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="bank_name">Bank Name *</Label>
+                <Label htmlFor="bank_name">Bank Name</Label>
                 <Input
                   id="bank_name"
                   value={formData.bank_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, bank_name: e.target.value }))}
                   placeholder="e.g., Emirates NBD, ADCB, FAB"
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bank_iban">UAE Bank Account (IBAN) *</Label>
+                <Label htmlFor="bank_iban">UAE Bank Account (IBAN)</Label>
                 <Input
                   id="bank_iban"
                   value={formData.bank_iban}
                   onChange={(e) => setFormData(prev => ({ ...prev, bank_iban: e.target.value }))}
                   placeholder="AE070331234567890123456"
-                  required
                 />
               </div>
             </div>

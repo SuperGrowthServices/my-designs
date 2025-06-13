@@ -255,8 +255,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onProceedToCheckout
               <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
                 <span className="text-xs">#{order.id.slice(0, 8)}</span>
                 <span className="text-xs">{formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}</span>
-                <Badge variant="secondary">{orderMetrics.totalParts} Parts Requested</Badge>
-                <Badge variant="secondary">{orderMetrics.totalPendingBids} Pending Bids</Badge>
+                <Badge variant="secondary">
+  {orderMetrics.totalParts} Parts Requested
+</Badge>
+
+<Badge variant="secondary" className="bg-purple-100 text-purple-800">
+  {orderMetrics.totalPendingBids} Pending Bids
+</Badge>
+
               </div>
             </div>
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
