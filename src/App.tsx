@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import Index from "./pages/Index";
+import {HomeDesign} from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import VendorDashboard from "./pages/VendorDashboard";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
@@ -26,7 +26,7 @@ function App() {
           <Toaster />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<HomeDesign />} />
               
               {/* Protected Buyer Routes */}
               <Route path="/dashboard" element={
