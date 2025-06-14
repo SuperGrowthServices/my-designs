@@ -298,6 +298,7 @@ export type Database = {
           delivered_at: string | null
           description: string | null
           id: string
+          is_accepted: boolean | null
           order_id: string
           part_name: string
           part_number: string | null
@@ -314,6 +315,7 @@ export type Database = {
           delivered_at?: string | null
           description?: string | null
           id?: string
+          is_accepted?: boolean | null
           order_id: string
           part_name: string
           part_number?: string | null
@@ -330,6 +332,7 @@ export type Database = {
           delivered_at?: string | null
           description?: string | null
           id?: string
+          is_accepted?: boolean | null
           order_id?: string
           part_name?: string
           part_number?: string | null
@@ -948,7 +951,7 @@ export type Database = {
         | "30 Days"
       refund_status: "pending" | "approved" | "rejected" | "processed"
       role_type: "buyer" | "vendor" | "admin"
-      user_role: "buyer" | "vendor" | "admin" | "delivery_driver"
+      user_role: "buyer" | "vendor" | "admin" | "driver"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1086,7 +1089,7 @@ export const Constants = {
       quote_warranty: ["No Warranty", "3 Days", "7 Days", "14 Days", "30 Days"],
       refund_status: ["pending", "approved", "rejected", "processed"],
       role_type: ["buyer", "vendor", "admin"],
-      user_role: ["buyer", "vendor", "admin", "delivery_driver"],
+      user_role: ["buyer", "vendor", "admin", "driver"],
     },
   },
 } as const
