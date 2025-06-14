@@ -100,7 +100,14 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, onOrder
     }
 
     setParts([...parts, currentPart]);
-    // Reset part fields but preserve vehicle selection - this will be handled in PartsStep component
+    // Reset part fields but preserve vehicle selection
+    setCurrentPart({
+      ...currentPart,
+      partName: '',
+      partNumber: '',
+      description: '',
+      quantity: 1
+    });
   };
 
   const removePart = (index: number) => {
@@ -108,18 +115,32 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, onOrder
   };
 
   const handleSubmitOrder = async () => {
-    if (!user || vehicles.length === 0 || parts.length === 0) {
-      toast({
-        title: "Cannot submit order",
-        description: "Please add at least one vehicle and one part.",
-        variant: "destructive"
-      });
-      return;
-    }
+  if (!user || vehicles.length === 0 || parts.length === 0) {
+    toast({
+      title: "Cannot submit order",
+      description: "Please add at least one vehicle and one part.",
+      variant: "destructive"
+    });
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
+  try {
+    // Group parts by vehicle index
+    const partsByVehicle: Record<number, Part[]> = {};
+    parts.forEach(part => {
+      if (!partsByVehicle[part.vehicleIndex]) {
+        partsByVehicle[part.vehicleIndex] = [];
+      }
+      partsByVehicle[part.vehicleIndex].push(part);
+    });
+
+    // Process each vehicle and its parts
+    const orderPromises = Object.entries(partsByVehicle).map(async ([vehicleIndexStr, vehicleParts]) => {
+      const vehicleIndex = parseInt(vehicleIndexStr);
+      const vehicle = vehicles[vehicleIndex];
+
       // Create order
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
@@ -132,34 +153,28 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, onOrder
 
       if (orderError) throw orderError;
 
-      // Create vehicles
-      const vehiclePromises = vehicles.map(vehicle => 
-        supabase
-          .from('vehicles')
-          .insert({
-            user_id: user.id,
-            make: vehicle.make,
-            model: vehicle.model,
-            year: vehicle.year,
-            vin: vehicle.vin || null
-          })
-          .select()
-          .single()
-      );
+      // Create vehicle record
+      const { data: vehicleData, error: vehicleError } = await supabase
+        .from('vehicles')
+        .insert({
+          user_id: user.id,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          vin: vehicle.vin || null
+        })
+        .select()
+        .single();
 
-      const vehicleResults = await Promise.all(vehiclePromises);
-      const vehicleData = vehicleResults.map(result => {
-        if (result.error) throw result.error;
-        return result.data;
-      });
+      if (vehicleError) throw vehicleError;
 
       // Create parts
-      const partPromises = parts.map(part => 
+      const partPromises = vehicleParts.map(part =>
         supabase
           .from('parts')
           .insert({
             order_id: orderData.id,
-            vehicle_id: vehicleData[part.vehicleIndex].id,
+            vehicle_id: vehicleData.id,
             part_name: part.partName,
             part_number: part.partNumber || null,
             description: part.description || null,
@@ -169,28 +184,62 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose, onOrder
 
       await Promise.all(partPromises);
 
-      toast({
-        title: "Order submitted successfully!",
-        description: "Vendors will start bidding on your parts soon."
+      // Trigger WhatsApp notifications - Updated for local development
+      const { error: notificationError } = await supabase.functions.invoke('whatsapp-notify', {
+        body: {
+          vehicle: {
+            make: vehicle.make,
+            model: vehicle.model,
+            year: vehicle.year,
+            vin: vehicle.vin || null,
+          },
+          parts: vehicleParts.map(p => ({
+            partName: p.partName,
+            partNumber: p.partNumber || null,
+          })),
+          orderId: orderData.id,
+        }
       });
 
-      handleClose();
-      
-      // Notify parent component about order creation
-      if (onOrderCreated) {
-        onOrderCreated();
+      if (notificationError) {
+        console.error("WhatsApp notification failed:", notificationError);
+        // Store failed notifications for later retry
+        await supabase
+          .from('failed_notifications')
+          .insert({
+            order_id: orderData.id,
+            vehicle_id: vehicleData.id,
+            error: JSON.stringify(notificationError),
+            retry_count: 0
+          });
       }
-    } catch (error: any) {
-      console.error('Error submitting order:', error);
-      toast({
-        title: "Error submitting order",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+
+      return orderData.id;
+    });
+
+    await Promise.all(orderPromises);
+
+    toast({
+      title: "Order submitted successfully!",
+      description: "Vendors are being notified via WhatsApp."
+    });
+
+    handleClose();
+    
+    if (onOrderCreated) {
+      onOrderCreated();
     }
-  };
+  } catch (error: any) {
+    console.error('Error submitting order:', error);
+    toast({
+      title: "Error submitting order",
+      description: error.message,
+      variant: "destructive"
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const renderStepContent = () => {
     switch (step) {
