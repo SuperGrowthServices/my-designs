@@ -31,7 +31,7 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { toast } = useToast();
 
   const handleSubmit = async () => {
     if (!price) {
@@ -121,9 +121,9 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
       onClose();
       
       toast({
-        title: "Quote Submitted!",
-        description: "Your quote has been successfully submitted",
-        variant: "success"
+        title: "Quote Submitted Successfully!",
+        description: `Your quote for ${part.partName} has been sent to the buyer.`,
+        variant: "success",
       });
     } catch (error: any) {
       console.error('Error submitting quote:', error);
@@ -284,7 +284,7 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
                 ) : (
                   <Upload className="mx-auto h-12 w-12 text-gray-400" />
                 )}
-                <div className="flex text-sm text-gray-600">
+                <div className="flex text-sm text-gray-600 justify-center">
                   <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
                     <span>Upload a file</span>
                     <input
@@ -322,8 +322,4 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
       </div>
     </div>
   );
-};
-
-const toast = ({ title, description, variant }: { title: string; description: string; variant: string }) => {
-    console.log(`[${variant.toUpperCase()}] ${title}: ${description}`);
 };
