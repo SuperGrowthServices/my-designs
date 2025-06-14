@@ -841,7 +841,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
-      get_logistics_data: {
+      get_driver_logistics_data: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }

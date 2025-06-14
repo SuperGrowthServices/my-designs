@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRoles } from '@/hooks/useUserRoles';
@@ -49,7 +48,6 @@ export const PickupManagement: React.FC = () => {
   const [readyParts, setReadyParts] = useState<ReadyPart[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedParts, setSelectedParts] = useState<string[]>([]);
-  const [pickupNotes, setPickupNotes] = useState('');
   const [vendorAddresses, setVendorAddresses] = useState<VendorPickupAddress[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [processing, setProcessing] = useState(false);
@@ -172,26 +170,12 @@ export const PickupManagement: React.FC = () => {
         return;
       }
 
-      // Create pickup notes record first
-      const { data: pickupNotesData, error: notesError } = await supabase
-        .from('pickup_notes')
-        .insert({
-          driver_id: user.id,
-          vendor_id: selectedAddress,
-          notes: pickupNotes
-        })
-        .select()
-        .single();
-
-      if (notesError) throw notesError;
-
-      // Update shipping status to 'collected' and add pickup notes reference
+      // Update shipping status directly without pickup notes
       const { error } = await supabase
         .from('parts')
         .update({
           shipping_status: 'collected',
           collected_at: new Date().toISOString(),
-          pickup_notes_id: pickupNotesData.id,
           driver_id: user.id
         })
         .in('id', selectedParts);
@@ -206,7 +190,6 @@ export const PickupManagement: React.FC = () => {
       // Refresh parts and clear selections
       fetchReadyParts();
       setSelectedParts([]);
-      setPickupNotes('');
       setSelectedAddress('');
     } catch (error: any) {
       console.error('Error marking parts as collected:', error);
@@ -340,15 +323,6 @@ export const PickupManagement: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-gray-700">Pickup Notes</h3>
-            <Textarea
-              placeholder="Add any special instructions for the driver..."
-              value={pickupNotes}
-              onChange={(e) => setPickupNotes(e.target.value)}
-            />
           </div>
 
           <Button onClick={handlePickup} disabled={processing} className="w-full">

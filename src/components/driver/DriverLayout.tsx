@@ -3,8 +3,14 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { ResponsiveSidebar } from '@/components/layout/ResponsiveSidebar';
-import { Truck, LogOut } from 'lucide-react';
+import { Truck, Package, LogOut } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+
+export type DriverTabId = 'deliveries' | 'pickups';
+
+const tabs = [
+  { id: 'deliveries' as DriverTabId, label: 'Deliveries', icon: Truck },
+];
 
 interface DriverLayoutProps {
   children: React.ReactNode;
@@ -24,15 +30,13 @@ export const DriverLayout: React.FC<DriverLayoutProps> = ({ children }) => {
     return <Navigate to="/driver/login" replace />;
   }
 
-  const sidebarItems = [
-    {
-      id: 'logistics',
-      label: 'Deliveries',
-      icon: Truck,
-      isActive: true,
-      onClick: () => {} // Only one page, no navigation needed
-    }
-  ];
+  const sidebarItems = tabs.map(tab => ({
+    id: tab.id,
+    label: tab.label,
+    icon: tab.icon,
+    isActive: tab.id === 'deliveries', // Default active tab
+    onClick: () => {} // Single page app for now
+  }));
 
   const header = (
     <div className="p-4 space-y-2">
@@ -43,16 +47,14 @@ export const DriverLayout: React.FC<DriverLayoutProps> = ({ children }) => {
   );
 
   const footer = (
-    <div className="p-4">
-      <Button
-        onClick={signOut}
-        variant="outline"
-        className="w-full flex items-center justify-center hover:bg-gray-50"
-      >
-        <LogOut className="w-4 h-4 mr-2" />
-        Sign Out
-      </Button>
-    </div>
+    <Button
+      onClick={signOut}
+      variant="outline"
+      className="w-full flex items-center justify-center"
+    >
+      <LogOut className="w-4 h-4 mr-2" />
+      Sign Out
+    </Button>
   );
 
   return (

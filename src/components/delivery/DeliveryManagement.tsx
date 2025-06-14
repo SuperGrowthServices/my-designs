@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +50,6 @@ export const DeliveryManagement: React.FC = () => {
   const [collectedParts, setCollectedParts] = useState<CollectedPart[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedParts, setSelectedParts] = useState<string[]>([]);
-  const [deliveryNotes, setDeliveryNotes] = useState('');
   const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [processing, setProcessing] = useState(false);
@@ -160,7 +158,6 @@ export const DeliveryManagement: React.FC = () => {
     setProcessing(true);
 
     try {
-      // Get user ID from the selected part's order
       const userId = collectedParts.find(part => part.id === selectedParts[0])?.order.user_id;
 
       if (!userId) {
@@ -175,18 +172,6 @@ export const DeliveryManagement: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      // Create delivery notes record
-      const { error: deliveryNotesError } = await supabase
-        .from('delivery_notes')
-        .insert({
-          customer_id: userId,
-          driver_id: userId, // This should be the actual driver ID in a real implementation
-          delivery_address: selectedAddress,
-          notes: deliveryNotes
-        });
-
-      if (deliveryNotesError) throw deliveryNotesError;
-
       toast({
         title: "Delivery created",
         description: "Parts have been marked as out for delivery."
@@ -195,7 +180,6 @@ export const DeliveryManagement: React.FC = () => {
       // Refresh parts and clear selections
       fetchCollectedParts();
       setSelectedParts([]);
-      setDeliveryNotes('');
       setDeliveryAddresses([]);
       setSelectedAddress('');
     } catch (error: any) {
@@ -314,16 +298,6 @@ export const DeliveryManagement: React.FC = () => {
                       ))}
                     </div>
                   )}
-                </div>
-
-                {/* Delivery Notes */}
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Delivery Notes</h3>
-                  <Textarea
-                    placeholder="Enter any special delivery instructions..."
-                    value={deliveryNotes}
-                    onChange={(e) => setDeliveryNotes(e.target.value)}
-                  />
                 </div>
 
                 {/* Create Delivery Button */}
