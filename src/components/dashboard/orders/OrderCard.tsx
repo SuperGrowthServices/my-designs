@@ -165,29 +165,36 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onProceedToCheckout
   };
 
   const handleAcceptBid = async (partId: string, bidId: string) => {
-    try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ status: 'accepted' })
-        .eq('id', bidId);
-      
-      if (error) throw error;
-      
-      toast({ 
-        title: "Bid accepted", 
-        description: "The bid has been accepted and added to your cart." 
-      });
-      
-      if (onBidUpdate) onBidUpdate();
-      setSelectedPart(null); // Close modal
-    } catch (error: any) {
-      toast({ 
-        title: "Error accepting bid", 
-        description: error.message, 
-        variant: "destructive" 
-      });
-    }
-  };
+  try {
+    const { error } = await supabase
+      .from('bids')
+      .update({ status: 'accepted' })
+      .eq('id', bidId);
+
+    if (error) throw error;
+
+    const { error: partError } = await supabase
+      .from('parts')
+      .update({ is_accepted: true })
+      .eq('id', partId);
+
+    if (partError) throw partError;
+
+    toast({ 
+      title: "Bid accepted", 
+      description: "The bid has been accepted and added to your cart." 
+    });
+    
+    if (onBidUpdate) onBidUpdate();
+    setSelectedPart(null);
+  } catch (error: any) {
+    toast({ 
+      title: "Error accepting bid", 
+      description: error.message, 
+      variant: "destructive" 
+    });
+  }
+};
 
   const hasPendingBids = (order.parts || []).some((part: any) =>
     (part.bids || []).some((bid: any) => bid.status === 'pending')

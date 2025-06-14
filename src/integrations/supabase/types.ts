@@ -812,6 +812,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_bid_and_update_part: {
+        Args: { bid_id: string; part_id: string }
+        Returns: undefined
+      }
       create_pickup_note_for_driver: {
         Args: { p_driver_id: string; p_vendor_id: string; p_notes?: string }
         Returns: string
