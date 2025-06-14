@@ -82,7 +82,7 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
 
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from('quotes')
+          .from('mybucket')
           .getPublicUrl(uploadData.path);
         
         imageUrl = urlData.publicUrl;
