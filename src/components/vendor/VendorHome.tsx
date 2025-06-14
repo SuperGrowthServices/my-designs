@@ -593,6 +593,7 @@ export const VendorHome: React.FC = () => {
                     } : null}
                     onClose={handleCloseModals}
                     mode={activeModal === 'view' ? 'view' : 'update'}
+                    onUpdate={handleBidUpdate}
                 />
             </div>
         </div>
