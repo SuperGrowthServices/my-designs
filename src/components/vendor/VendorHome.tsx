@@ -171,71 +171,58 @@ export const VendorHome: React.FC = () => {
     const fetchLiveOrders = async () => {
         if (!vendorProfileId) return;
         try {
-            let query = supabase
-                .from("orders")
-                .select(
-                    `
-          *,
-          parts:parts(
-            *,
-            vehicle:vehicles(*),
-            bids:bids(*)
-          )
-        `
-                )
-                .eq("status", "open")
-                .order("created_at", { ascending: false });
-
-            // If not an admin, only show orders where:
-            // 1. No parts have accepted bids OR
-            // 2. The vendor has an accepted bid on any part
-            if (!isAdmin) {
-                query = query.or(`
-          parts.bids.status.not.eq.accepted,
-          and(
-            parts.bids.status.eq.accepted,
-            parts.bids.vendor_id.eq.${vendorProfileId}
-          )
-        `);
-            }
-
-            const { data, error } = await query;
+            // First, get all open orders with their parts and bids
+            const { data, error } = await supabase
+                .from('orders')
+                .select(`
+                    *,
+                    parts!inner(
+                        *,
+                        vehicle:vehicles(*),
+                        bids(*)
+                    )
+                `)
+                .eq('status', 'open')
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            const processedOrders = (data || []).map((order) => ({
-                ...order,
-                parts: order.parts.map((part) => ({
-                    ...part,
-                    existing_bid: part.bids?.find(
-                        (bid) => bid.vendor_id === vendorProfileId
-                    ),
-                    other_bids_count:
-                        part.bids?.filter(
-                            (b) =>
-                                b.vendor_id !== vendorProfileId &&
-                                b.status === "pending"
-                        ).length || 0,
-                    // Add a flag to indicate if this part has any accepted bids
-                    has_accepted_bid:
-                        part.bids?.some((b) => b.status === "accepted") ||
-                        false,
-                })),
-            }));
+            // Process orders...
+            const processedOrders = (data || [])
+                .map((order) => ({
+                    ...order,
+                    // Filter parts at the application level for more precise control
+                    parts: order.parts.filter(part => {
+                        if (!part.is_accepted) {
+                            // Show all non-accepted parts
+                            return true;
+                        }
+                        
+                        // For accepted parts, only show if this vendor's bid was accepted
+                        return part.bids?.some(bid => 
+                            bid.vendor_id === vendorProfileId && 
+                            bid.status === 'accepted'
+                        );
+                    })
+                    .map((part) => ({
+                        ...part,
+                        existing_bid: part.bids?.find(
+                            (bid) => bid.vendor_id === vendorProfileId
+                        ),
+                        other_bids_count:
+                            part.bids?.filter(
+                                (b) =>
+                                    b.vendor_id !== vendorProfileId &&
+                                    b.status === 'pending'
+                            ).length || 0,
+                    }))
+                }))
+                // Remove orders that have no visible parts after filtering
+                .filter(order => order.parts.length > 0);
 
-            // Filter out orders where all parts have accepted bids (unless vendor has one of them)
-            const filteredOrders = processedOrders.filter((order) => {
-                if (isAdmin) return true;
-                return order.parts.some(
-                    (part) =>
-                        !part.has_accepted_bid ||
-                        part.existing_bid?.status === "accepted"
-                );
-            });
-
-            setOrders(filteredOrders);
+            setOrders(processedOrders);
         } catch (error) {
-            console.error("Error fetching live orders:", error);
+            console.error('Error fetching live orders:', error);
         }
     };
 
