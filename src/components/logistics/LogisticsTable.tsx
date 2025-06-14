@@ -44,7 +44,11 @@ type OrderGroups = Record<string, GroupData>;
 type DeliveryTypeGroups = Record<string, OrderGroups>;
 export type AddressGroups = Record<string, DeliveryTypeGroups>;
 
-export const LogisticsTable: React.FC = () => {
+interface LogisticsTableProps {
+  isDriverView?: boolean;
+}
+
+export const LogisticsTable: React.FC<LogisticsTableProps> = ({ isDriverView = false }) => {
   const [parts, setParts] = useState<PartForLogistics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +57,10 @@ export const LogisticsTable: React.FC = () => {
   const fetchLogisticsData = async () => {
     setLoading(true);
     setError(null);
-    const { data, error } = await (supabase.rpc as any)('get_logistics_data');
+    // Modify the RPC call to include driver-specific filtering if needed
+    const { data, error } = await (supabase.rpc as any)(
+      isDriverView ? 'get_driver_logistics_data' : 'get_logistics_data'
+    );
     
     if (error) {
       console.error('Error fetching logistics data:', error);
@@ -193,10 +200,15 @@ export const LogisticsTable: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
+      {/* Modify UI based on isDriverView if needed */}
       <Tabs defaultValue="pickup">
         <TabsList>
-          <TabsTrigger value="pickup">Pick-up ({Object.keys(pickupGroups).length})</TabsTrigger>
-          <TabsTrigger value="delivering">Delivering ({Object.keys(deliveryGroups).length})</TabsTrigger>
+          <TabsTrigger value="pickup">
+            {isDriverView ? 'My Pickups' : 'Pick-up'} ({Object.keys(pickupGroups).length})
+          </TabsTrigger>
+          <TabsTrigger value="delivering">
+            {isDriverView ? 'My Deliveries' : 'Delivering'} ({Object.keys(deliveryGroups).length})
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="pickup" className="mt-4">
           {Object.keys(pickupGroups).length > 0 ? renderGroup(pickupGroups, 'pickup') : <p className="text-center py-8 text-gray-500">No parts are currently waiting for pickup.</p>}
@@ -213,4 +225,4 @@ export const LogisticsTable: React.FC = () => {
       />
     </div>
   );
-}; 
+};

@@ -15,6 +15,8 @@ import { PaymentReceipt } from "./components/checkout/PaymentReceipt";
 import DashboardDesign from './pages/DashboardDesign';
 import VendorDesign from './pages/VendorDesign';
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { DriverLoginPage } from '@/pages/DriverLoginPage';
+import { DriverDashboardPage } from '@/pages/DriverDashboardPage';
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,14 @@ function App() {
               <Route path="/receipt/:orderId" element={
                 <ProtectedRoute allowedRoles={['buyer', 'vendor', 'admin']}>
                   <PaymentReceipt />
+                </ProtectedRoute>
+              } />
+              
+              {/* Driver Routes */}
+              <Route path="/driver/login" element={<DriverLoginPage />} />
+              <Route path="/driver/dashboard" element={
+                <ProtectedRoute allowedRoles={['driver', 'admin']}>
+                  <DriverDashboardPage />
                 </ProtectedRoute>
               } />
               

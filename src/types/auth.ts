@@ -12,6 +12,8 @@ export interface SignInResponse extends AuthResult {
   role?: string;
 }
 
+export type UserRole = 'buyer' | 'vendor' | 'admin' | 'driver';
+
 export interface SignUpData {
   email: string;
   password: string;
@@ -19,7 +21,7 @@ export interface SignUpData {
     full_name: string;
     whatsapp_number: string;
     location: string;
-    role: 'buyer' | 'vendor';
+    role: UserRole;
     business_name?: string;
     bank_name?: string;
     bank_iban?: string;

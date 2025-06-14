@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useUserRoles = () => {
   const { user } = useAuth();
-  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchUserRoles = async () => {
@@ -21,52 +20,54 @@ export const useUserRoles = () => {
 
       if (error) {
         console.error('Error fetching user roles:', error);
-        setUserRoles([]);
+        setRoles([]);
       } else {
-        const roles = data?.map((r: any) => r.role) || [];
-        setUserRoles(roles);
+        const fetchedRoles = data?.map((r: any) => r.role) || [];
+        setRoles(fetchedRoles);
         
         // If no roles found, ensure user has default buyer role
-        if (roles.length === 0) {
+        if (fetchedRoles.length === 0) {
           console.log('No roles found, adding default buyer role');
           const { error: insertError } = await supabase
             .from('user_roles')
             .insert({ user_id: user.id, role: 'buyer' });
           
           if (!insertError) {
-            setUserRoles(['buyer']);
+            setRoles(['buyer']);
           }
         }
       }
     } catch (error) {
       console.error('Error fetching user roles:', error);
-      setUserRoles([]);
+      setRoles([]);
     } finally {
       setLoading(false);
     }
   };
 
   const hasRole = (role: string): boolean => {
-    return userRoles.includes(role);
+    return roles.includes(role);
   };
 
   const isAdmin = (): boolean => hasRole('admin');
   const isVendor = (): boolean => hasRole('vendor');
   const isBuyer = (): boolean => hasRole('buyer');
   const isDeliveryDriver = (): boolean => hasRole('delivery_driver');
+  const isDriver = (): boolean => hasRole('driver');
 
   useEffect(() => {
     fetchUserRoles();
   }, [user]);
 
   return {
-    userRoles,
+    roles,
     loading,
     hasRole,
     isAdmin,
     isVendor,
     isBuyer,
     isDeliveryDriver,
+    isDriver,
     refetchRoles: fetchUserRoles
   };
 };
