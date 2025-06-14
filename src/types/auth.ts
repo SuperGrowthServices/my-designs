@@ -1,17 +1,5 @@
 import { User, Session } from '@supabase/supabase-js';
 
-export interface AuthResult {
-  data: {
-    user: User | null;
-    session: Session | null;
-  } | null;
-  error: Error | null;
-}
-
-export interface SignInResponse extends AuthResult {
-  role?: string;
-}
-
 export type UserRole = 'buyer' | 'vendor' | 'admin' | 'driver';
 
 export interface SignUpData {
@@ -23,12 +11,24 @@ export interface SignUpData {
     location: string;
     role: UserRole;
     business_name?: string;
-    bank_name?: string;
-    bank_iban?: string;
     vendor_tags?: string[];
-    application_status?: string;
-    application_submitted_at?: string;
+    delivery_address?: string;
+    delivery_phone?: string;
+    delivery_instructions?: string;
+    google_maps_url?: string;
   };
+}
+
+export interface AuthResult {
+  data: {
+    user: User;
+    session: Session;
+  } | null;
+  error: Error | null;
+}
+
+export interface SignInResponse extends AuthResult {
+  role?: UserRole;
 }
 
 export interface AuthContextType {

@@ -1,23 +1,6 @@
-import { AuthResult } from '@/types/auth';
+import { AuthResult, SignUpData } from '@/types/auth';  // Import the types from auth.ts
 import { supabase } from '@/integrations/supabase/client';
 import { ensureUserRecordsExist } from './userRecordService';
-
-interface SignUpData {
-  email: string;
-  password: string;
-  userData: {
-    full_name: string;
-    whatsapp_number: string;
-    location: string;
-    role: 'buyer' | 'vendor';
-    business_name?: string;
-    bank_name?: string;
-    bank_iban?: string;
-    vendor_tags?: string[];
-    application_status?: string;
-    application_submitted_at?: string;
-  };
-}
 
 export const signUp = async (data: SignUpData) => {
   try {
@@ -55,7 +38,7 @@ export const signUp = async (data: SignUpData) => {
 
       if (userError) throw userError;
 
-      // 3. Create user profile without role
+      // 3. Create user profile
       const { error: profileError } = await supabase
         .from('user_profiles')
         .insert([{
@@ -65,9 +48,8 @@ export const signUp = async (data: SignUpData) => {
           whatsapp_number: data.userData.whatsapp_number,
           location: data.userData.location,
           business_name: data.userData.business_name,
-          bank_name: data.userData.bank_name,
-          bank_iban: data.userData.bank_iban,
           vendor_tags: data.userData.vendor_tags,
+          google_maps_url: data.userData.google_maps_url,
           application_status: data.userData.role === 'vendor' ? 'pending' : 'not_applied',
           application_submitted_at: data.userData.role === 'vendor' ? new Date().toISOString() : null
         }]);
@@ -80,7 +62,7 @@ export const signUp = async (data: SignUpData) => {
         .insert([{
           user_id: userId,
           role: data.userData.role,
-          is_approved: data.userData.role === 'buyer' // Vendors need approval
+          is_approved: data.userData.role === 'buyer' // Only buyers are auto-approved
         }]);
 
       if (roleError) throw roleError;
