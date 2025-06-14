@@ -53,6 +53,8 @@ export const useOrderData = () => {
               status,
               notes,
               image_url,
+              warranty,
+              condition,
               vendor_id,
               created_at,
               updated_at

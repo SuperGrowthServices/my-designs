@@ -7,11 +7,13 @@ import { OrderModal } from './OrderModal';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
 export const DashboardHome: React.FC = () => {
-  const { liveOrders, loading } = useDashboardData();
+  const { liveOrders, loading,refetchOrders } = useDashboardData();
   const [showOrderModal, setShowOrderModal] = React.useState(false);
 
   const handleOrderCreated = () => {
     setShowOrderModal(false);
+    refetchOrders(); // Refresh orders after creation
+
     // After order creation, user will need to refresh the page to see updates
   };
 
@@ -42,7 +44,10 @@ export const DashboardHome: React.FC = () => {
               <div className="text-lg">Loading orders...</div>
             </div>
           ) : (
-            <MyOrders />
+            <MyOrders
+            orders={liveOrders}
+              loading={loading}
+              refetchOrders={refetchOrders} />
           )}
         </CardContent>
       </Card>
