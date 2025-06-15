@@ -6,8 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronDown, ChevronRight, Download, DollarSign, Package, Calendar, Truck, User, MapPin } from 'lucide-react';
-import { format } from 'date-fns';
+import { ChevronDown, ChevronRight, Download, DollarSign, Package, Calendar } from 'lucide-react';
 
 interface SalesOrder {
   order_id: string;
@@ -24,23 +23,6 @@ interface SalesOrder {
     vendor_earning: number;
     shipping_status: string;
     shipped_at: string | null;
-    pickup_notes?: {
-      id: string;
-      notes: string;
-      created_at: string;
-      driver: {
-        full_name: string;
-      };
-    };
-    delivery_notes?: {
-      id: string;
-      notes: string;
-      created_at: string;
-      delivery_address: string;
-      driver: {
-        full_name: string;
-      };
-    };
   }[];
 }
 
@@ -63,26 +45,14 @@ export const SalesHistory: React.FC = () => {
   }, [user]);
 
   const getOrderDisplayStatus = (order: SalesOrder): string => {
-    console.log('Vendor: Checking order status for order:', order.order_id, {
-      is_paid: order.is_paid,
-      original_status: order.order_status,
-      parts: order.parts.map(p => ({ id: p.id, shipping_status: p.shipping_status }))
-    });
-
-    // If not paid, show original status
     if (!order.is_paid) {
       return order.order_status;
     }
 
-    // If paid, check shipping status of parts
     const allPartsDelivered = order.parts.every(part => part.shipping_status === 'delivered');
-    const anyPartCollected = order.parts.some(part => part.shipping_status === 'collected');
-
-    console.log('Vendor: Status check result:', {
-      allPartsDelivered,
-      anyPartCollected,
-      partStatuses: order.parts.map(p => p.shipping_status)
-    });
+    const anyPartCollected = order.parts.some(part => 
+      part.shipping_status === 'collected' || part.shipping_status === 'admin_collected'
+    );
 
     if (allPartsDelivered) {
       return 'completed';
@@ -97,8 +67,6 @@ export const SalesHistory: React.FC = () => {
     if (!user) return;
 
     try {
-      console.log('Fetching sales history for vendor:', user.id);
-
       // Step 1: Get all accepted bids for this vendor
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
@@ -106,15 +74,9 @@ export const SalesHistory: React.FC = () => {
         .eq('vendor_id', user.id)
         .eq('status', 'accepted');
 
-      if (bidsError) {
-        console.error('Error fetching bids:', bidsError);
-        throw bidsError;
-      }
-
-      console.log('Fetched bids data:', bidsData);
+      if (bidsError) throw bidsError;
 
       if (!bidsData || bidsData.length === 0) {
-        console.log('No accepted bids found for vendor');
         setOrders([]);
         setLoading(false);
         return;
@@ -122,7 +84,6 @@ export const SalesHistory: React.FC = () => {
 
       // Step 2: Get part IDs from bids
       const partIds = bidsData.map(bid => bid.part_id);
-      console.log('Part IDs from bids:', partIds);
 
       // Step 3: Get parts data with order information - ONLY for paid orders
       const { data: partsData, error: partsError } = await supabase
@@ -133,27 +94,6 @@ export const SalesHistory: React.FC = () => {
           quantity,
           shipping_status,
           order_id,
-          pickup_notes_id,
-          delivery_notes_id,
-          pickup_notes (
-            id,
-            notes,
-            created_at,
-            driver_id,
-            delivery_drivers (
-              full_name
-            )
-          ),
-          delivery_notes (
-            id,
-            notes,
-            created_at,
-            delivery_address,
-            driver_id,
-            delivery_drivers (
-              full_name
-            )
-          ),
           orders!inner (
             id,
             created_at,
@@ -164,30 +104,18 @@ export const SalesHistory: React.FC = () => {
         .in('id', partIds)
         .eq('orders.is_paid', true);
 
-      if (partsError) {
-        console.error('Error fetching parts:', partsError);
-        throw partsError;
-      }
-
-      console.log('Fetched parts data (paid orders only):', partsData);
+      if (partsError) throw partsError;
 
       // Step 4: Combine bids and parts data and group by order
       const orderMap = new Map<string, SalesOrder>();
 
       if (partsData) {
         for (const part of partsData) {
-          // Find the corresponding bid for this part
           const bid = bidsData.find(b => b.part_id === part.id);
           if (!bid) continue;
 
           const orderId = part.order_id;
           const vendorEarning = Number(bid.price) * 0.9; // 90% of bid price
-
-          console.log(`Processing part ${part.id} for order ${orderId}:`, {
-            bidPrice: bid.price,
-            vendorEarning,
-            partName: part.part_name
-          });
 
           if (!orderMap.has(orderId)) {
             orderMap.set(orderId, {
@@ -211,32 +139,12 @@ export const SalesHistory: React.FC = () => {
             bid_price: Number(bid.price),
             vendor_earning: vendorEarning,
             shipping_status: part.shipping_status || 'pending_pickup',
-            shipped_at: bid.shipped_at,
-            pickup_notes: part.pickup_notes ? {
-              id: part.pickup_notes.id,
-              notes: part.pickup_notes.notes,
-              created_at: part.pickup_notes.created_at,
-              driver: {
-                full_name: part.pickup_notes.delivery_drivers?.full_name || 'Unknown Driver'
-              }
-            } : undefined,
-            delivery_notes: part.delivery_notes ? {
-              id: part.delivery_notes.id,
-              notes: part.delivery_notes.notes,
-              created_at: part.delivery_notes.created_at,
-              delivery_address: part.delivery_notes.delivery_address,
-              driver: {
-                full_name: part.delivery_notes.delivery_drivers?.full_name || 'Unknown Driver'
-              }
-            } : undefined
+            shipped_at: bid.shipped_at
           });
         }
       }
 
       const ordersArray = Array.from(orderMap.values());
-      console.log('Final paid orders array:', ordersArray);
-      
-      // Sort orders by date (newest first)
       ordersArray.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
       
       setOrders(ordersArray);
@@ -245,21 +153,17 @@ export const SalesHistory: React.FC = () => {
       const totalOrders = ordersArray.length;
       const totalEarnings = ordersArray.reduce((sum, order) => sum + order.total_earnings, 0);
       
-      // This month earnings
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const thisMonthEarnings = ordersArray
         .filter(order => new Date(order.order_date) >= firstOfMonth)
         .reduce((sum, order) => sum + order.total_earnings, 0);
 
-      const calculatedStats = {
+      setStats({
         totalOrders,
         totalEarnings,
         thisMonthEarnings
-      };
-
-      console.log('Calculated stats:', calculatedStats);
-      setStats(calculatedStats);
+      });
 
     } catch (error) {
       console.error('Error fetching sales history:', error);
@@ -330,6 +234,7 @@ export const SalesHistory: React.FC = () => {
     const statusMap = {
       'pending_pickup': { variant: 'outline' as const, label: 'Pending Pickup' },
       'collected': { variant: 'secondary' as const, label: 'Collected' },
+      'admin_collected': { variant: 'secondary' as const, label: 'Admin Collected' },
       'delivered': { variant: 'default' as const, label: 'Delivered' }
     };
     
@@ -457,7 +362,7 @@ export const SalesHistory: React.FC = () => {
                               <h4 className="font-medium mb-3">Part Breakdown</h4>
                               <div className="space-y-2">
                                 {order.parts.map((part) => (
-                                  <div key={part.id} className="bg-white p-3 rounded border space-y-3">
+                                  <div key={part.id} className="bg-white p-3 rounded border">
                                     <div className="flex items-center justify-between">
                                       <div className="flex-1">
                                         <div className="font-medium">{part.part_name}</div>
@@ -477,43 +382,9 @@ export const SalesHistory: React.FC = () => {
                                         </div>
                                       </div>
                                     </div>
-
-                                    {/* Pickup Notes */}
-                                    {part.pickup_notes && (
-                                      <div className="bg-blue-50 p-2 rounded">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <Truck className="w-4 h-4 text-blue-600" />
-                                          <span className="text-sm font-medium text-blue-800">Pickup Notes</span>
-                                        </div>
-                                        <p className="text-sm text-blue-700">{part.pickup_notes.notes}</p>
-                                        <div className="flex items-center gap-4 mt-1 text-xs text-blue-600">
-                                          <div className="flex items-center gap-1">
-                                            <User className="w-3 h-3" />
-                                            <span>{part.pickup_notes.driver.full_name}</span>
-                                          </div>
-                                          <span>{format(new Date(part.pickup_notes.created_at), 'MMM dd, yyyy HH:mm')}</span>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Delivery Notes */}
-                                    {part.delivery_notes && (
-                                      <div className="bg-green-50 p-2 rounded">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <MapPin className="w-4 h-4 text-green-600" />
-                                          <span className="text-sm font-medium text-green-800">Delivery Notes</span>
-                                        </div>
-                                        <p className="text-sm text-green-700">{part.delivery_notes.notes}</p>
-                                        <p className="text-sm text-green-600 mt-1">
-                                          <strong>Address:</strong> {part.delivery_notes.delivery_address}
-                                        </p>
-                                        <div className="flex items-center gap-4 mt-1 text-xs text-green-600">
-                                          <div className="flex items-center gap-1">
-                                            <User className="w-3 h-3" />
-                                            <span>{part.delivery_notes.driver.full_name}</span>
-                                          </div>
-                                          <span>{format(new Date(part.delivery_notes.created_at), 'MMM dd, yyyy HH:mm')}</span>
-                                        </div>
+                                    {part.shipped_at && (
+                                      <div className="mt-2 text-sm text-gray-500">
+                                        Shipped on: {new Date(part.shipped_at).toLocaleString()}
                                       </div>
                                     )}
                                   </div>
