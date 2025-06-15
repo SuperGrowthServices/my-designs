@@ -49,41 +49,41 @@ export const ReadyToShip: React.FC = () => {
       console.log('Fetching ready to ship items for vendor:', user.id);
 
       const { data: bidsData, error: bidsError } = await supabase
-        .from('bids')
-        .select(`
-          id,
-          price,
-          part_id,
-          parts (
-            id,
-            part_name,
-            part_number,
-            quantity,
-            shipping_status,
-            order_id,
-            vehicle:vehicles (
-              make,
-              model,
-              year
-            ),
-            order:orders (
-              id,
-              status
-            )
-          )
-        `)
-        .eq('vendor_id', user.id)
-        .eq('status', 'accepted');
+  .from('bids')
+  .select(`
+    id,
+    price,
+    part_id,
+    parts (
+      id,
+      part_name,
+      part_number,
+      quantity,
+      shipping_status,
+      order_id,
+      vehicle:vehicles (
+        make,
+        model,
+        year
+      ),
+      order:orders!inner (
+        id,
+        is_paid
+      )
+    )
+  `)
+  .eq('vendor_id', user.id)
+  .eq('status', 'accepted')
+  .not('parts.order.is_paid', 'is', false); // Ensure order is paid
 
       if (bidsError) throw bidsError;
-
+        
       const readyItems: ReadyToShipItem[] = [];
       
       if (bidsData) {
         for (const bid of bidsData) {
-          if (bid.parts && 
-              bid.parts.order.status === 'completed' && 
-              bid.parts.shipping_status === 'pending_pickup') {
+          // Change this line in your code:
+if (bid.parts && bid.parts.order.is_paid && bid.parts.shipping_status === 'pending_pickup') {
             
             readyItems.push({
               id: `${bid.id}-${bid.parts.id}`,
