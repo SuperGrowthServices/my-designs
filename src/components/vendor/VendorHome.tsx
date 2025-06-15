@@ -184,7 +184,7 @@ export const VendorHome: React.FC = () => {
                 `)
                 .eq('status', 'open')
                 .order('created_at', { ascending: false });
-
+                console.log(data)
             if (error) throw error;
 
             // Process orders...
@@ -289,6 +289,7 @@ export const VendorHome: React.FC = () => {
                             condition: 'Used - Good',
                             warranty: '7 Days',
                             notes: part.existing_bid.notes || '',
+                            imageUrl:part.existing_bid.image_url,
                             isAccepted: part.existing_bid.status === 'accepted'
                         } : undefined
                     }],

@@ -79,13 +79,13 @@ export const QuotedPartForm = ({
                 const filePath = `quotes/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
-                    .from("quotes")
+                    .from("mybucket")
                     .upload(filePath, imageFile);
 
                 if (uploadError) throw uploadError;
 
                 const { data } = supabase.storage
-                    .from("quotes")
+                    .from("mybucket")
                     .getPublicUrl(filePath);
 
                 imageUrl = data.publicUrl;
