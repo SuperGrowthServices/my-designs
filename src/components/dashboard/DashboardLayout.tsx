@@ -29,7 +29,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   userProfile
 }) => {
   const { signOut } = useAuth();
-  const { isAdmin } = useUserRoles();
+  const { isAdmin: isAdminUser } = useUserRoles(); // Rename to avoid confusion
   const navigate = useNavigate();
 
   const sidebarItems = tabs.map(tab => ({
@@ -50,8 +50,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const footer = (
     <div className="space-y-3">
-      {/* Only show admin switch if user is admin */}
-      {isAdmin && (
+      {/* Only show admin switch if isAdmin() returns true */}
+      {isAdminUser() && (
         <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
           <p className="text-xs text-gray-500 mb-2">Switch Dashboard</p>
           <Button
