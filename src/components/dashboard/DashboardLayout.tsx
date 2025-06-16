@@ -2,7 +2,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResponsiveSidebar } from '@/components/layout/ResponsiveSidebar';
-import { Home, FileText, HeadphonesIcon, Settings, LogOut } from 'lucide-react';
+import { Home, FileText, HeadphonesIcon, Settings, LogOut, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 export type DashboardTab = 'home' | 'quotes' | 'support' | 'settings';
 
@@ -27,6 +29,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   userProfile
 }) => {
   const { signOut } = useAuth();
+  const { isAdmin } = useUserRoles();
+  const navigate = useNavigate();
 
   const sidebarItems = tabs.map(tab => ({
     id: tab.id,
@@ -45,14 +49,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   );
 
   const footer = (
-    <Button
-      onClick={signOut}
-      variant="outline"
-      className="w-full flex items-center justify-center"
-    >
-      <LogOut className="w-4 h-4 mr-2" />
-      Sign Out
-    </Button>
+    <div className="space-y-3">
+      {/* Only show admin switch if user is admin */}
+      {isAdmin && (
+        <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
+          <p className="text-xs text-gray-500 mb-2">Switch Dashboard</p>
+          <Button
+            onClick={() => navigate('/admin')}
+            variant="outline"
+            className="w-full text-sm bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Admin Mode
+          </Button>
+        </div>
+      )}
+
+      <Button
+        onClick={signOut}
+        variant="outline"
+        className="w-full flex items-center justify-center"
+      >
+        <LogOut className="w-4 h-4 mr-2" />
+        Sign Out
+      </Button>
+    </div>
   );
 
   return (
