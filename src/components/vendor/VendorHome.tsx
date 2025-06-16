@@ -3,8 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { CompactStatsBar } from "./CompactStatsBar";
-import { OrderBidModal } from "./OrderBidModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
@@ -153,7 +151,7 @@ export const VendorHome: React.FC = () => {
     const [selectedVehicle, setSelectedVehicle] =
         useState<DisplayVehicle | null>(null);
 
-        
+
     const vendorProfileId = user?.id;
 
     useEffect(() => {
@@ -184,7 +182,7 @@ export const VendorHome: React.FC = () => {
                 `)
                 .eq('status', 'open')
                 .order('created_at', { ascending: false });
-                console.log(data)
+            console.log(data)
             if (error) throw error;
 
             // Process orders...
@@ -197,25 +195,25 @@ export const VendorHome: React.FC = () => {
                             // Show all non-accepted parts
                             return true;
                         }
-                        
+
                         // For accepted parts, only show if this vendor's bid was accepted
-                        return part.bids?.some(bid => 
-                            bid.vendor_id === vendorProfileId && 
+                        return part.bids?.some(bid =>
+                            bid.vendor_id === vendorProfileId &&
                             bid.status === 'accepted'
                         );
                     })
-                    .map((part) => ({
-                        ...part,
-                        existing_bid: part.bids?.find(
-                            (bid) => bid.vendor_id === vendorProfileId
-                        ),
-                        other_bids_count:
-                            part.bids?.filter(
-                                (b) =>
-                                    b.vendor_id !== vendorProfileId &&
-                                    b.status === 'pending'
-                            ).length || 0,
-                    }))
+                        .map((part) => ({
+                            ...part,
+                            existing_bid: part.bids?.find(
+                                (bid) => bid.vendor_id === vendorProfileId
+                            ),
+                            other_bids_count:
+                                part.bids?.filter(
+                                    (b) =>
+                                        b.vendor_id !== vendorProfileId &&
+                                        b.status === 'pending'
+                                ).length || 0,
+                        }))
                 }))
                 // Remove orders that have no visible parts after filtering
                 .filter(order => order.parts.length > 0);
@@ -248,10 +246,10 @@ export const VendorHome: React.FC = () => {
             // Assuming each order has a vehicle property that contains vehicle information
             order.parts.reduce((acc: DisplayVehicle[], part) => {
                 if (!part.vehicle) return acc;
-                
+
                 // Find existing vehicle in accumulator
                 const existingVehicle = acc.find((v) => v.id === part.vehicle.id);
-                
+
                 if (existingVehicle) {
                     // Add part to existing vehicle
                     existingVehicle.parts.push({
@@ -289,12 +287,12 @@ export const VendorHome: React.FC = () => {
                             condition: 'Used - Good',
                             warranty: '7 Days',
                             notes: part.existing_bid.notes || '',
-                            imageUrl:part.existing_bid.image_url,
+                            imageUrl: part.existing_bid.image_url,
                             isAccepted: part.existing_bid.status === 'accepted'
                         } : undefined
                     }],
-                    status: part.existing_bid ? 
-                        (part.existing_bid.status === 'accepted' ? 'accepted' : 'quoted') 
+                    status: part.existing_bid ?
+                        (part.existing_bid.status === 'accepted' ? 'accepted' : 'quoted')
                         : 'new'
                 });
                 return acc;
@@ -303,10 +301,10 @@ export const VendorHome: React.FC = () => {
 
         // Filter vehicles for each category
         const newVehicles = allVehicles.filter((v) => v.parts.some((p) => !p.myQuote));
-        const quotedVehicles = allVehicles.filter(v => 
+        const quotedVehicles = allVehicles.filter(v =>
             v.parts.some(p => p.myQuote && !p.myQuote.isAccepted)
         );
-        const acceptedVehicles = allVehicles.filter(v => 
+        const acceptedVehicles = allVehicles.filter(v =>
             v.parts.some(p => p.myQuote?.isAccepted)
         );
 
@@ -330,120 +328,6 @@ export const VendorHome: React.FC = () => {
         setSelectedVehicle(null);
         setActiveModal(null);
     };
-
-    const displayedOrders = useMemo(() => {
-        const searchLower = searchTerm.toLowerCase();
-
-        const filtered = orders.filter((order) => {
-            // Only show orders that the vendor can bid on
-            const canBidOnOrder = order.parts.some(
-                (part) =>
-                    !part.existing_bid && // No existing bid from this vendor
-                    !part.bids?.some((b) => b.status === "accepted") // No accepted bids
-            );
-
-            if (!canBidOnOrder && !isAdmin) return false;
-
-            const hasPendingBid = order.parts.some(
-                (p) => p.existing_bid?.status === "pending"
-            );
-            const hasAcceptedBid = order.parts.some(
-                (p) => p.existing_bid?.status === "accepted"
-            );
-
-            const matchesTab =
-                (currentTab === "new" && !hasPendingBid && !hasAcceptedBid) ||
-                (currentTab === "mybids" && hasPendingBid && !hasAcceptedBid) ||
-                (currentTab === "accepted" && hasAcceptedBid);
-
-            if (!matchesTab) return false;
-
-            if (searchTerm) {
-                return order.parts.some(
-                    (part) =>
-                        part.part_name.toLowerCase().includes(searchLower) ||
-                        (part.vehicle?.make || "")
-                            .toLowerCase()
-                            .includes(searchLower) ||
-                        (part.vehicle?.model || "")
-                            .toLowerCase()
-                            .includes(searchLower) ||
-                        part.part_number?.toLowerCase().includes(searchLower)
-                );
-            }
-            return true;
-        });
-
-        return [...filtered].sort((a, b) => {
-            switch (sortOption) {
-                case "oldest":
-                    return (
-                        new Date(a.created_at).getTime() -
-                        new Date(b.created_at).getTime()
-                    );
-                case "vehicle":
-                    const aVehicle = `${a.parts[0]?.vehicle?.make || ""} ${
-                        a.parts[0]?.vehicle?.model || ""
-                    }`;
-                    const bVehicle = `${b.parts[0]?.vehicle?.make || ""} ${
-                        b.parts[0]?.vehicle?.model || ""
-                    }`;
-                    return aVehicle.localeCompare(bVehicle);
-                default:
-                    return (
-                        new Date(b.created_at).getTime() -
-                        new Date(a.created_at).getTime()
-                    );
-            }
-        });
-    }, [orders, currentTab, searchTerm, sortOption, isAdmin]);
-
-    const getEmptyState = () => {
-        if (loading) return null;
-        const titles = {
-            new: {
-                title: "No new orders available",
-                desc: "Check back later for new orders from buyers.",
-            },
-            mybids: {
-                title: "You haven't placed any bids yet",
-                desc: "Browse new orders and place your first bid.",
-            },
-            accepted: {
-                title: "No accepted bids yet",
-                desc: "Once a buyer accepts your bid, it will appear here.",
-            },
-        };
-        const content = titles[currentTab as keyof typeof titles];
-
-        if (searchTerm) {
-            content.title = "No orders match your search";
-            content.desc = "Try adjusting your search terms.";
-        }
-
-        return (
-            <div className="text-center py-16 col-span-full">
-                <ShoppingCart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium">{content.title}</h3>
-                <p className="text-muted-foreground">{content.desc}</p>
-            </div>
-        );
-    };
-
-    const counts = useMemo(
-        () => ({
-            new: orders.filter((o) => !o.parts.some((p) => p.existing_bid))
-                .length,
-            mybids: orders.filter((o) =>
-                o.parts.some((p) => p.existing_bid?.status === "pending")
-            ).length,
-            accepted: orders.filter((o) =>
-                o.parts.some((p) => p.existing_bid?.status === "accepted")
-            ).length,
-        }),
-        [orders]
-    );
-
     return (
         <div className="bg-slate-50 min-h-screen">
             <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
@@ -510,6 +394,8 @@ export const VendorHome: React.FC = () => {
                             <Input
                                 placeholder="Search by part, vehicle, or part number..."
                                 className="pl-10 focus:ring-2 focus:ring-blue-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
                     </CardContent>
@@ -534,44 +420,83 @@ export const VendorHome: React.FC = () => {
                     </TabsList>
                     <TabsContent value="new-orders" className="mt-6">
                         <div className="space-y-4">
-                            {newVehicles.map((vehicle) => (
-                                <VehicleCard
-                                    key={`new-${vehicle.id}`}
-                                    vehicle={vehicle}
-                                    onSelect={() =>
-                                        handleSelectVehicle(vehicle, "details")
-                                    }
-                                    badgeType="new"
-                                />
-                            ))}
+                            {newVehicles
+                                .filter(vehicle => {
+                                    if (!searchTerm) return true;
+                                    const searchLower = searchTerm.toLowerCase();
+                                    return (
+                                        vehicle.vehicleName.toLowerCase().includes(searchLower) ||
+                                        vehicle.vinNumber.toLowerCase().includes(searchLower) ||
+                                        vehicle.parts.some(part =>
+                                            part.partName.toLowerCase().includes(searchLower) ||
+                                            part.partNumber.toLowerCase().includes(searchLower)
+                                        )
+                                    );
+                                })
+                                .map((vehicle) => (
+                                    <VehicleCard
+                                        key={`new-${vehicle.id}`}
+                                        vehicle={vehicle}
+                                        onSelect={() =>
+                                            handleSelectVehicle(vehicle, "details")
+                                        }
+                                        badgeType="new"
+                                    />
+                                ))}
                         </div>
                     </TabsContent>
                     <TabsContent value="my-quotes" className="mt-6">
                         <div className="space-y-4">
-                            {quotedVehicles.map((vehicle) => (
-                                <VehicleCard
-                                    key={`myquote-${vehicle.id}`}
-                                    vehicle={vehicle}
-                                    onSelect={() =>
-                                        handleSelectVehicle(vehicle, "update")
-                                    }
-                                    badgeType="quoted"
-                                />
-                            ))}
+                            {quotedVehicles
+                                .filter(vehicle => {
+                                    if (!searchTerm) return true;
+                                    const searchLower = searchTerm.toLowerCase();
+                                    return (
+                                        vehicle.vehicleName.toLowerCase().includes(searchLower) ||
+                                        vehicle.vinNumber.toLowerCase().includes(searchLower) ||
+                                        vehicle.parts.some(part =>
+                                            part.partName.toLowerCase().includes(searchLower) ||
+                                            part.partNumber.toLowerCase().includes(searchLower)
+                                        )
+                                    );
+                                })
+                                .map((vehicle) => (
+                                    <VehicleCard
+                                        key={`myquote-${vehicle.id}`}
+                                        vehicle={vehicle}
+                                        onSelect={() =>
+                                            handleSelectVehicle(vehicle, "update")
+                                        }
+                                        badgeType="quoted"
+                                    />
+                                ))}
                         </div>
                     </TabsContent>
                     <TabsContent value="accepted-quotes" className="mt-6">
                         <div className="space-y-4">
-                            {acceptedVehicles.map((vehicle) => (
-                                <VehicleCard
-                                    key={`accepted-${vehicle.id}`}
-                                    vehicle={vehicle}
-                                    onSelect={() =>
-                                        handleSelectVehicle(vehicle, "view")
-                                    }
-                                    badgeType="accepted"
-                                />
-                            ))}
+                            {acceptedVehicles
+                                .filter(vehicle => {
+                                    if (!searchTerm) return true;
+                                    const searchLower = searchTerm.toLowerCase();
+                                    return (
+                                        vehicle.vehicleName.toLowerCase().includes(searchLower) ||
+                                        vehicle.vinNumber.toLowerCase().includes(searchLower) ||
+                                        vehicle.parts.some(part =>
+                                            part.partName.toLowerCase().includes(searchLower) ||
+                                            part.partNumber.toLowerCase().includes(searchLower)
+                                        )
+                                    );
+                                })
+                                .map((vehicle) => (
+                                    <VehicleCard
+                                        key={`accepted-${vehicle.id}`}
+                                        vehicle={vehicle}
+                                        onSelect={() =>
+                                            handleSelectVehicle(vehicle, "view")
+                                        }
+                                        badgeType="accepted"
+                                    />
+                                ))}
                         </div>
                     </TabsContent>
                 </Tabs>
