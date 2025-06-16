@@ -9,7 +9,7 @@ import { UpdatePartStatusModal } from './UpdatePartStatusModal'; // Will be crea
 import { Package, Truck, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-// Type definitions based on the get_logistics_data function
+
 export interface PartForLogistics {
   part_id: string;
   part_name: string;
@@ -61,9 +61,7 @@ export const LogisticsTable: React.FC = () => {
     setError(null);
     try {
       const { data, error } = await supabase
-        .rpc('get_driver_logistics_data', undefined, {
-          count: 'exact'
-        });
+        .rpc('get_driver_logistics_data');
       
       if (error) {
         console.error('Error fetching logistics data:', error);
@@ -71,20 +69,24 @@ export const LogisticsTable: React.FC = () => {
         return;
       }
 
-      // First cast to unknown, then to our expected type
-      const typedData = (data as unknown) as PartForLogistics[];
-      
-      if (!Array.isArray(typedData)) {
-        throw new Error('Invalid response format');
+      // Handle the JSONB response from the function
+      if (!data) {
+        setParts([]);
+        return;
       }
 
-      // Validate the data structure
-      const validatedData = typedData.map(part => {
-        if (!part.part_id || !part.part_name || !part.order_id) {
-          console.warn('Invalid part data:', part);
-          return null;
-        }
-        return {
+      // Parse the JSONB array if it's a string
+      const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+      
+      if (!Array.isArray(parsedData)) {
+        setParts([]);
+        return;
+      }
+
+      // Validate and transform the data
+      const validatedData = parsedData
+        .filter(part => part?.part_id && part?.part_name && part?.order_id)
+        .map(part => ({
           part_id: part.part_id,
           part_name: part.part_name,
           quantity: part.quantity,
@@ -106,8 +108,7 @@ export const LogisticsTable: React.FC = () => {
             pickup_address: part.vendor_info.pickup_address,
             google_maps_url: part.vendor_info.google_maps_url,
           } : null
-        } satisfies PartForLogistics;
-      }).filter((part): part is PartForLogistics => part !== null);
+        }));
 
       setParts(validatedData);
     } catch (err) {
