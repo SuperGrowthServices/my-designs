@@ -5,14 +5,14 @@ import { ResponsiveSidebar } from '@/components/layout/ResponsiveSidebar';
 import { Home, FileText, HeadphonesIcon, Settings, LogOut, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRoles } from '@/hooks/useUserRoles';
-
-export type DashboardTab = 'home' | 'quotes' | 'support' | 'settings';
+import { DashboardTab } from '@/types/dashboard';
 
 const tabs = [
   { id: 'home' as DashboardTab, label: 'Dashboard', icon: Home },
   { id: 'quotes' as DashboardTab, label: 'Order History', icon: FileText },
   { id: 'support' as DashboardTab, label: 'Support', icon: HeadphonesIcon },
   { id: 'settings' as DashboardTab, label: 'Settings', icon: Settings },
+  // Note: vendor-application tab is not shown in the sidebar but is handled in the Dashboard component
 ];
 
 interface DashboardLayoutProps {
@@ -20,16 +20,20 @@ interface DashboardLayoutProps {
   activeTab: DashboardTab;
   onTabChange: (tab: DashboardTab) => void;
   userProfile?: any;
+  showVendorSwitch?: boolean;     // Add this
+  onSwitchToVendor?: () => void;  // Add this
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
   activeTab,
   onTabChange,
-  userProfile
+  userProfile,
+  showVendorSwitch = false,    // Add with default value
+  onSwitchToVendor            // Add this
 }) => {
   const { signOut } = useAuth();
-  const { isAdmin: isAdminUser } = useUserRoles(); // Rename to avoid confusion
+  const { isAdmin: isAdminUser } = useUserRoles();
   const navigate = useNavigate();
 
   const sidebarItems = tabs.map(tab => ({
@@ -50,7 +54,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const footer = (
     <div className="space-y-3">
-      {/* Only show admin switch if isAdmin() returns true */}
+      {/* Show vendor switch if enabled */}
+      {showVendorSwitch && onSwitchToVendor && (
+        <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
+          <Button
+            onClick={onSwitchToVendor}
+            variant="outline"
+            className="w-full text-sm"
+          >
+            Switch to Vendor Mode
+          </Button>
+        </div>
+      )}
+
+      {/* Show admin switch if user is admin */}
       {isAdminUser() && (
         <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
           <p className="text-xs text-gray-500 mb-2">Switch Dashboard</p>

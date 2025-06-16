@@ -20,16 +20,19 @@ interface VendorDashboardLayoutProps {
   activeTab: VendorDashboardTab;
   onTabChange: (tab: VendorDashboardTab) => void;
   userProfile?: any;
+  onSwitchToBuyer: () => void;  // Add this
+  isAdmin: boolean;              // Add this
 }
 
 export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
   children,
   activeTab,
   onTabChange,
-  userProfile
+  userProfile,
+  onSwitchToBuyer,  // Add this
+  isAdmin           // Add this
 }) => {
   const { signOut } = useAuth();
-  const { isAdmin: isAdminUser } = useUserRoles(); // Rename to avoid confusion
   const navigate = useNavigate();
 
   const sidebarItems = tabs.map(tab => ({
@@ -50,10 +53,16 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
 
   const footer = (
     <div className="space-y-3">
-      {/* Only show admin switch if isAdmin() returns true */}
-      {isAdminUser() && (
-        <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
-          <p className="text-xs text-gray-500 mb-2">Switch Dashboard</p>
+      <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
+        <Button
+          onClick={onSwitchToBuyer}
+          variant="outline"
+          className="w-full text-sm"
+        >
+          Switch to Buyer Mode
+        </Button>
+        
+        {isAdmin && (
           <Button
             onClick={() => navigate('/admin')}
             variant="outline"
@@ -62,8 +71,8 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
             <Shield className="w-4 h-4 mr-2" />
             Admin Mode
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       <Button
         onClick={signOut}
