@@ -60,7 +60,7 @@ export const DriverLayout: React.FC<DriverLayoutProps> = ({ children }) => {
   return (
     <ResponsiveSidebar
       title="Driver Portal"
-      subtitle="EasyAutoParts.ae"
+      subtitle="EasyCarParts.ae"
       items={sidebarItems}
       header={header}
       footer={footer}

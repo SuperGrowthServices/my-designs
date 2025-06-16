@@ -100,7 +100,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   return (
     <ResponsiveSidebar
       title="Admin Panel"
-      subtitle="EasyAutoParts.ae"
+      subtitle="EasyCarParts.ae"
       items={sidebarItems}
       header={header}
       footer={footer}

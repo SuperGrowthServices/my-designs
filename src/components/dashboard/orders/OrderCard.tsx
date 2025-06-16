@@ -5,114 +5,142 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { X, ChevronDown, Car, Package, CheckCircle, Hourglass, ShoppingCart, Check, ShieldCheck, Wrench } from 'lucide-react';
+import { X, ChevronDown, Car, Package, CheckCircle, Hourglass, ShoppingCart, Check, ShieldCheck, Wrench,ZoomIn } from 'lucide-react';
 // import { BidsList } from './BidsList';
 import { formatDistanceToNow } from 'date-fns';
+import { ImagePopup } from '@/components/ImagePopup';
 
 interface OrderCardProps {
-  order: any;
-  onProceedToCheckout: (orderId: string) => void;
-  onBidUpdate?: () => void;
+  order: any
+  onProceedToCheckout: (orderId: string) => void
+  onBidUpdate?: () => void
 }
 
-// BidReviewModal component following the QuoteList_Design pattern
-const BidReviewModal = ({ 
-  isOpen, 
-  onClose, 
-  part, 
-  onAcceptBid 
-}: { 
-  isOpen: boolean;
-  onClose: () => void;
-  part: any | null;
-  onAcceptBid: (partId: string, bidId: string) => void;
+// BidReviewModal component with fixed image popup
+const BidReviewModal = ({
+  isOpen,
+  onClose,
+  part,
+  onAcceptBid,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  part: any | null
+  onAcceptBid: (partId: string, bidId: string) => void
 }) => {
-  if (!isOpen || !part) return null;
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null)
 
-  const pendingBids = (part.bids || []).filter((bid: any) => bid.status === 'pending');
+  if (!isOpen || !part) return null
+
+  const pendingBids = (part.bids || []).filter((bid: any) => bid.status === "pending")
+
+  const handleImageClick = (imageUrl: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log("Image clicked:", imageUrl) // Debug log
+    setEnlargedImage(imageUrl)
+  }
+
+  const handleCloseImage = () => {
+    console.log("Closing image popup") // Debug log
+    setEnlargedImage(null)
+  }
 
   return (
-    <div 
-      onClick={onClose} 
-      style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: 0, 
-        background: 'rgba(0,0,0,0.5)', 
-        zIndex: 100, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-      }}
-    >
-      <div 
-        onClick={(e) => e.stopPropagation()} 
-        style={{ 
-          background: 'white', 
-          padding: '2rem', 
-          borderRadius: '8px', 
-          width: '90%', 
-          maxWidth: '600px' 
-        }}
+    <>
+      {enlargedImage && (
+        <ImagePopup imageUrl={enlargedImage} onClose={handleCloseImage} alt={`Bid image for ${part.part_name}`} />
+      )}
+
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center"
       >
-        <h2 className="text-xl font-bold mb-4">Review Bids for {part.part_name}</h2>
-        
-        {/* BidList following QuoteList_Design pattern */}
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-          {pendingBids.map((bid: any, index: number) => (
-            <div key={bid.id} className="border rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex-grow">
-                <p className="font-bold text-lg">{`Bid ${index + 1}`}</p>
-                <div className="flex items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-2 flex-wrap">
-                  <div className="flex items-center gap-1">
-                    <Wrench className="h-4 w-4" />
-                    <span>{bid.condition || 'New'}</span>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Review Bids for {part.part_name}</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {pendingBids.map((bid: any, index: number) => (
+              <div key={bid.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex-grow">
+                    <p className="font-bold text-lg text-gray-900">{`Bid ${index + 1}`}</p>
+                    <div className="flex items-center gap-x-4 gap-y-1 text-sm text-gray-600 mt-2 flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <Wrench className="h-4 w-4" />
+                        <span>{bid.condition || "New"}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ShieldCheck className="h-4 w-4" />
+                        <span>{bid.warranty || "6 Months"} Warranty</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 mt-4">
+                      {bid.notes && (
+                        <div className="text-sm bg-gray-50 p-4 rounded-lg border border-gray-100 flex-grow">
+                          <p className="font-semibold mb-2 text-gray-900">Vendor Notes:</p>
+                          <p className="text-gray-600 leading-relaxed">{bid.notes}</p>
+                        </div>
+                      )}
+                      {bid.image_url && (
+                        <div className="flex-shrink-0">
+                          <p className="font-semibold mb-2 text-sm text-gray-900">Image</p>
+                          <div className="relative group">
+                            <img
+                              src={bid.image_url || "/placeholder.svg"}
+                              alt="Vendor bid"
+                              className="h-20 w-20 object-cover rounded-lg border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105"
+                              onClick={(e) => handleImageClick(bid.image_url, e)}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-all duration-200 flex items-center justify-center">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <div className="bg-white/90 rounded-full p-1">
+                                  <ZoomIn className="w-3 h-3 text-gray-700" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>{bid.warranty || '6 Months'} Warranty</span>
+                  <div className="flex flex-col items-end gap-3 w-full sm:w-auto">
+                    <Badge
+                      variant="outline"
+                      className="text-2xl font-bold py-2 px-4 border-green-600 text-green-700 bg-green-50"
+                    >
+                      AED {bid.price}
+                    </Badge>
+                    <Button
+                      className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                      onClick={() => onAcceptBid(part.id, bid.id)}
+                    >
+                      <Check className="mr-2 h-4 w-4" /> Accept Bid & Add to Cart
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-4 mt-3">
-                  {bid.notes && (
-                    <div className="text-sm bg-gray-50 p-3 rounded-md border flex-grow">
-                      <p className="font-semibold mb-1">Vendor Notes:</p>
-                      <p className="text-muted-foreground">{bid.notes}</p>
-                    </div>
-                  )}
-                  {bid.image_url && (
-                    <div className="flex-shrink-0">
-                      <p className="font-semibold mb-1 text-sm">Image</p>
-                      <img 
-                        src={bid.image_url} 
-                        alt="Vendor bid" 
-                        className="h-20 w-20 object-cover rounded-md border" 
-                      />
-                    </div>
-                  )}
-                </div>
               </div>
-              <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
-                <Badge variant="outline" className="text-2xl font-bold p-2 px-4 border-green-600 text-green-700 bg-green-50 mb-2">
-                  AED {bid.price}
-                </Badge>
-                <Button 
-                  className="w-full sm:w-auto" 
-                  onClick={() => onAcceptBid(part.id, bid.id)}
-                >
-                  <Check className="mr-2 h-4 w-4" /> Accept Bid & Add to Cart
-                </Button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <Button onClick={onClose} variant="outline" className="mt-6 w-full">
+            Close
+          </Button>
         </div>
-        
-        <Button onClick={onClose} variant="outline" className="mt-4 w-full">Close</Button>
       </div>
-    </div>
-  );
+    </>
+  )
 };
 
 export const OrderCard: React.FC<OrderCardProps> = ({ order, onProceedToCheckout, onBidUpdate }) => {

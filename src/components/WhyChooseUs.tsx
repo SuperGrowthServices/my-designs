@@ -34,7 +34,7 @@ const WhyChooseUs = () => {
             Built for Car Owners, Garages, and Enthusiasts
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Why thousands of UAE customers trust EasyAutoParts for their automotive needs
+            Why thousands of UAE customers trust EasyCarParts for their automotive needs
           </p>
         </div>
 

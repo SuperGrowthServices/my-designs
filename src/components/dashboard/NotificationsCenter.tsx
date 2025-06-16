@@ -117,7 +117,7 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
           id: 'welcome',
           type: 'success',
           icon: Package,
-          title: 'Welcome to EasyAutoParts!',
+          title: 'Welcome to EasyCarParts!',
           message: 'You\'ve created your first order. Vendors will start bidding soon.',
           timestamp: new Date().toISOString(),
           actionable: false,

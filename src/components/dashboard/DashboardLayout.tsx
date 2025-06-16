@@ -58,7 +58,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <ResponsiveSidebar
       title="Buyer Dashboard"
-      subtitle="EasyAutoParts.ae"
+      subtitle="EasyCarParts.ae"
       items={sidebarItems}
       header={header}
       footer={footer}

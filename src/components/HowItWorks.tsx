@@ -35,7 +35,7 @@ const HowItWorks = () => {
       <div className="container-responsive">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            How EasyAutoParts Works
+            How EasyCarParts Works
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Get the car parts you need in four simple steps

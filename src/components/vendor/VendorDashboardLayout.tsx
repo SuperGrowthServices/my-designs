@@ -58,7 +58,7 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
   return (
     <ResponsiveSidebar
       title="Vendor Portal"
-      subtitle="EasyAutoParts.ae"
+      subtitle="EasyCarParts.ae"
       items={sidebarItems}
       header={header}
       footer={footer}
