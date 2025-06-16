@@ -31,14 +31,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
     fullName: '',
     whatsappNumber: '',
     location: '',
-    // Vendor specific fields
+    // Update vendor specific fields
     business_name: '',
+    delivery_address: '', // Add this
     bank_name: '',
     bank_iban: '',
-    pickup_name: '',
-    pickup_address: '',
-    pickup_phone: '',
-    pickup_instructions: '',
     google_maps_url: '',
     vendor_tags: [] as string[]
   });
@@ -138,14 +135,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
       fullName: '',
       whatsappNumber: '',
       location: '',
-      // Vendor specific fields
       business_name: '',
+      delivery_address: '',  // Add this
       bank_name: '',
       bank_iban: '',
-      pickup_name: '',
-      pickup_address: '',
-      pickup_phone: '',
-      pickup_instructions: '',
       google_maps_url: '',
       vendor_tags: [] as string[]
     });
@@ -200,18 +193,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
 
         {signupType === 'vendor' && (
           <>
+            
+
             <div className="space-y-2">
-              <Label htmlFor="google_maps_url">Google Maps URL</Label>
+              <Label htmlFor="delivery_address">
+                Business Address <span className="text-red-500">*</span>
+              </Label>
               <Input
-                id="google_maps_url"
-                type="url"
-                placeholder="https://maps.google.com/..."
-                value={formData.google_maps_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, google_maps_url: e.target.value }))}
+                id="delivery_address"
+                value={formData.delivery_address}
+                onChange={(e) => setFormData(prev => ({ ...prev, delivery_address: e.target.value }))}
+                required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Add your business location on Google Maps (optional)
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -224,6 +217,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
                 onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="google_maps_url">Google Maps URL to your location</Label>
+              <Input
+                id="google_maps_url"
+                type="url"
+                placeholder="https://maps.google.com/..."
+                value={formData.google_maps_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, google_maps_url: e.target.value }))}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Add your business location on Google Maps (optional)
+              </p>
             </div>
 
             <div className="space-y-2">
