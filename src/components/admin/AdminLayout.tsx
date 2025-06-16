@@ -18,7 +18,7 @@ const tabs = [
   { id: 'overview' as AdminTabId, label: 'Overview', icon: Home },
   { id: 'users' as AdminTabId, label: 'Users', icon: Users },
   { id: 'applications' as AdminTabId, label: 'Applications', icon: FileText },
-  { id: 'orders' as AdminTabId, label: 'Orders', icon: History },
+  { id: 'orders' as AdminTabId, label: 'Orders', icon: Package }, // Changed from History to Package
   { id: 'logistics' as AdminTabId, label: 'Logistics', icon: Truck },
   { id: 'logs' as AdminTabId, label: 'Logs', icon: Activity },
 ];
