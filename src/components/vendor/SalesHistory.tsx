@@ -312,7 +312,6 @@ export const SalesHistory: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
-                    <TableHead>Order ID</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Parts</TableHead>
                     <TableHead className="text-right">Earnings (AED)</TableHead>
@@ -332,11 +331,6 @@ export const SalesHistory: React.FC = () => {
                           ) : (
                             <ChevronRight className="w-4 h-4" />
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-mono text-sm">
-                            #{order.order_id.slice(0, 8)}
-                          </div>
                         </TableCell>
                         <TableCell>
                           {new Date(order.order_date).toLocaleDateString()}
