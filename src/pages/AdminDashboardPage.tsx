@@ -7,13 +7,13 @@ import { AdminOverview } from '@/components/admin/AdminOverview';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { VendorApplications } from '@/components/admin/VendorApplications';
 import LogisticsPage from '@/pages/LogisticsPage';
+import { AdminLogs } from '@/components/admin/logs/AdminLogs';
 
 const AdminDashboardPage = () => {
   const { loading, error, refresh } = useAdminData();
   const [activeTab, setActiveTab] = useState<AdminTabId>('overview');
 
   const renderContent = () => {
-    // Placeholder for now
     if (loading) {
       return (
         <div className="flex items-center justify-center h-64">
@@ -44,6 +44,8 @@ const AdminDashboardPage = () => {
         return <VendorApplications />;
       case 'logistics':
         return <LogisticsPage />;
+      case 'logs':
+        return <AdminLogs />;
       default:
         return <div>Select a tab</div>;
     }
@@ -56,4 +58,4 @@ const AdminDashboardPage = () => {
   );
 };
 
-export default AdminDashboardPage; 
+export default AdminDashboardPage;

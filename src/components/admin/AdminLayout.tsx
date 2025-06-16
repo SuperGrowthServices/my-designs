@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { ResponsiveSidebar } from '@/components/layout/ResponsiveSidebar';
-import { Home, Users, FileText, Settings, LogOut, Package, History, Truck, User } from 'lucide-react';
+import { Home, Users, FileText, Settings, LogOut, Package, History, Truck, User, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export type AdminTabId = 'overview' | 'users' | 'applications' | 'orders' | 'logistics' | 'logs';
@@ -20,7 +20,7 @@ const tabs = [
   { id: 'applications' as AdminTabId, label: 'Applications', icon: FileText },
   { id: 'orders' as AdminTabId, label: 'Orders', icon: History },
   { id: 'logistics' as AdminTabId, label: 'Logistics', icon: Truck },
-  { id: 'logs' as AdminTabId, label: 'Logs', icon: Settings },
+  { id: 'logs' as AdminTabId, label: 'Logs', icon: Activity },
 ];
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
