@@ -1,26 +1,38 @@
+
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 export const ensureUserRecordsExist = async (user: User) => {
   try {
-    // 🔍 Upsert into users table by id
-    console.log('Upserting user record for:', user.id);
-    const { error: upsertUserError } = await supabase
+    // First ensure user exists in users table (without role column)
+    const { data: existingUser, error: userCheckError } = await supabase
       .from('users')
-      .upsert({
-        id: user.id,
-        email: user.email || ''
-      }, {
-        onConflict: 'id' // safer than email
-      });
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    if (upsertUserError) {
-      console.error('Error upserting user record:', upsertUserError);
-    } else {
-      console.log('User record ensured in users table');
+    if (userCheckError && userCheckError.code !== 'PGRST116') {
+      console.error('Error checking user:', userCheckError);
     }
 
-    // ✅ Ensure at least a buyer role in user_roles table
+    // If user doesn't exist in users table, create it
+    if (!existingUser) {
+      console.log('Creating missing user record for:', user.id);
+      const { error: createUserError } = await supabase
+        .from('users')
+        .insert({
+          id: user.id,
+          email: user.email || ''
+        });
+
+      if (createUserError) {
+        console.error('Error creating user record:', createUserError);
+      } else {
+        console.log('User record created successfully');
+      }
+    }
+
+    // Ensure user has at least a buyer role in user_roles table
     const { data: existingRole, error: roleCheckError } = await supabase
       .from('user_roles')
       .select('id')
@@ -31,8 +43,9 @@ export const ensureUserRecordsExist = async (user: User) => {
       console.error('Error checking user role:', roleCheckError);
     }
 
+    // If no role exists in user_roles, create default buyer role
     if (!existingRole) {
-      console.log('Creating default buyer role for:', user.id);
+      console.log('Creating missing user role record for:', user.id);
       const { error: createRoleError } = await supabase
         .from('user_roles')
         .insert({
@@ -41,13 +54,13 @@ export const ensureUserRecordsExist = async (user: User) => {
         });
 
       if (createRoleError) {
-        console.error('Error creating user role:', createRoleError);
+        console.error('Error creating user role record:', createRoleError);
       } else {
-        console.log('User role created successfully');
+        console.log('User role record created successfully');
       }
     }
 
-    // 📦 Ensure user profile exists
+    // Then check if profile exists
     const { data: existingProfile, error: checkError } = await supabase
       .from('user_profiles')
       .select('id')
@@ -59,9 +72,10 @@ export const ensureUserRecordsExist = async (user: User) => {
       return;
     }
 
+    // If profile doesn't exist, create it from auth metadata
     if (!existingProfile) {
       console.log('Creating missing profile for user:', user.id);
-
+      
       const metadata = user.user_metadata || {};
       const { error: createError } = await supabase
         .from('user_profiles')
@@ -81,6 +95,6 @@ export const ensureUserRecordsExist = async (user: User) => {
       }
     }
   } catch (error) {
-    console.error('Unexpected error ensuring user records:', error);
+    console.error('Error ensuring user records exist:', error);
   }
 };
