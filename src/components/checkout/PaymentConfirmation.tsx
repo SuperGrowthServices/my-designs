@@ -34,13 +34,11 @@ export const PaymentConfirmation: React.FC = () => {
     if (!sessionId || !user) return;
 
     try {
-      console.log('Verifying payment with session ID:', sessionId);
       
       const { data, error } = await supabase.functions.invoke('verify-payment', {
         body: { session_id: sessionId }
       });
 
-      console.log('Payment verification response:', { data, error });
 
       if (error) {
         throw new Error(error.message || 'Payment verification failed');

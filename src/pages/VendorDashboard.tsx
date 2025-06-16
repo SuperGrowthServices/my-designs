@@ -32,7 +32,6 @@ const VendorDashboard = () => {
     if (!user) return;
 
     try {
-      console.log('Fetching user profile for vendor:', user.id);
       
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')

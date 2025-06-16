@@ -46,7 +46,6 @@ export const ReadyToShip: React.FC = () => {
     if (!user) return;
 
     try {
-      console.log('Fetching ready to ship items for vendor:', user.id);
 
       const { data: bidsData, error: bidsError } = await supabase
   .from('bids')

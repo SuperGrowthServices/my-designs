@@ -30,7 +30,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
     if (!user || !orderId) return;
 
     try {
-      console.log('Fetching order details for order:', orderId);
       
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
@@ -44,7 +43,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
         throw orderError;
       }
       
-      console.log('Order data:', orderData);
       setOrder(orderData);
 
       const { data: partsData, error: partsError } = await supabase
@@ -57,7 +55,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
         throw partsError;
       }
 
-      console.log('Parts data:', partsData);
       const acceptedBidsData: AcceptedBid[] = [];
       
       for (const part of partsData || []) {
@@ -70,7 +67,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
         if (bidsError) {
           console.error('Error fetching bids for part:', part.id, bidsError);
         } else if (bidsData) {
-          console.log('Accepted bids for part', part.id, ':', bidsData);
           bidsData.forEach((bid: any) => {
             acceptedBidsData.push({
               id: bid.id,
@@ -82,7 +78,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
         }
       }
 
-      console.log('Final accepted bids data:', acceptedBidsData);
       setAcceptedBids(acceptedBidsData);
     } catch (error) {
       console.error('Error fetching order details:', error);
@@ -98,7 +93,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
 
   const fetchDeliveryOptions = async () => {
     try {
-      console.log('Fetching delivery options...');
       
       const { data, error } = await supabase
         .from('delivery_options')
@@ -112,7 +106,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
         throw error;
       }
 
-      console.log('Raw delivery options:', data);
       
       // Deduplicate based on estimated_days and keep the first (cheapest) option
       const uniqueOptions = data?.reduce((acc: DeliveryOption[], option) => {
@@ -128,7 +121,6 @@ export const useCheckoutData = (orderId: string | undefined) => {
         return acc;
       }, []) || [];
 
-      console.log('Deduplicated delivery options:', uniqueOptions);
       setDeliveryOptions(uniqueOptions);
     } catch (error) {
       console.error('Error fetching delivery options:', error);

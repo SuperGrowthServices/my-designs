@@ -182,7 +182,6 @@ export const VendorHome: React.FC = () => {
                 `)
                 .eq('status', 'open')
                 .order('created_at', { ascending: false });
-            console.log(data)
             if (error) throw error;
 
             // Process orders...

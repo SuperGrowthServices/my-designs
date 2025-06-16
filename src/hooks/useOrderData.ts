@@ -25,8 +25,7 @@ export const useOrderData = () => {
 
     setLoading(true);
     try {
-      console.log('=== FETCHING ORDERS ===');
-      console.log('User ID:', user.id);
+      
       
       // Single optimized query with all necessary JOINs
       const { data: ordersData, error } = await supabase
@@ -78,7 +77,6 @@ export const useOrderData = () => {
         throw error;
       }
 
-      console.log('Raw orders data:', ordersData);
 
       // Process orders to add hasAcceptedBids flag and delivery priority
       const processedOrders = ordersData?.map(order => {
@@ -94,7 +92,6 @@ export const useOrderData = () => {
           return acceptedBidsCount > 0;
         }) || false;
 
-        console.log(`Order ${order.id} has accepted bids:`, hasAcceptedBids);
         
         return {
           ...order,
@@ -121,9 +118,6 @@ export const useOrderData = () => {
         });
       });
 
-      console.log('=== PROCESSED ORDERS ===');
-      console.log('Total orders:', processedOrders.length);
-      console.log('Orders with accepted bids:', processedOrders.filter(o => o.hasAcceptedBids).length);
 
       setOrders(processedOrders);
       setLastFetchTime(now);
@@ -151,7 +145,6 @@ export const useOrderData = () => {
 
   // Manual refresh function (forces cache invalidation)
   const refetchOrders = useCallback(() => {
-    console.log('=== MANUALLY REFETCHING ORDERS ===');
     fetchOrders(true);
   }, [fetchOrders]);
 

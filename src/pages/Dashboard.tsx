@@ -63,7 +63,6 @@ const Dashboard = () => {
       .select('role,is_approved')
       .eq('user_id', user.id)
       .single();
-    console.log(roleData)
     if (roleError) {
       console.error('Error fetching user role:', roleError);
       return;

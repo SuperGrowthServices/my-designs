@@ -32,7 +32,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Failed to fetch roles:', error);
       return [];
     }
-    console.log("thisis role ",data)
 
     return data.map((r) => r.role);
   };
@@ -62,7 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      console.log('Auth state changed:', event, session);
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -71,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Remove this line since we're handling it in signUp
           // await ensureUserRecordsExist(session.user);
           const roles = await fetchUserRoles(session.user.id);
-          console.log('User roles:', roles);
         }, 0);
       }
 
@@ -85,7 +82,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (session?.user) {
       const roles = await fetchUserRoles(session.user.id);
-      console.log('User roles on reload:', roles); // ✅ Also log here for reloads
     }
 
     setLoading(false);

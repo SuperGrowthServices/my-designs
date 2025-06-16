@@ -27,7 +27,6 @@ export const useUserRoles = () => {
         
         // If no roles found, ensure user has default buyer role
         if (fetchedRoles.length === 0) {
-          console.log('No roles found, adding default buyer role');
           const { error: insertError } = await supabase
             .from('user_roles')
             .insert({ user_id: user.id, role: 'buyer' });

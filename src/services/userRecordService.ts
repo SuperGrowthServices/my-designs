@@ -17,7 +17,6 @@ export const ensureUserRecordsExist = async (user: User) => {
 
     // If user doesn't exist in users table, create it
     if (!existingUser) {
-      console.log('Creating missing user record for:', user.id);
       const { error: createUserError } = await supabase
         .from('users')
         .insert({
@@ -45,7 +44,6 @@ export const ensureUserRecordsExist = async (user: User) => {
 
     // If no role exists in user_roles, create default buyer role
     if (!existingRole) {
-      console.log('Creating missing user role record for:', user.id);
       const { error: createRoleError } = await supabase
         .from('user_roles')
         .insert({

@@ -43,7 +43,6 @@ export const VendorApplications: React.FC = () => {
   };
 
   const handleApprove = async (user_id: string) => {
-    console.log('Attempting to approve application for user_id:', user_id);
     
     if (!user_id) {
       console.error('Invalid user_id:', user_id);
@@ -66,7 +65,6 @@ export const VendorApplications: React.FC = () => {
         .select()
         .single();
 
-      console.log('Profile update result:', { profileData, updateError });
 
       if (updateError) throw updateError;
 
@@ -77,7 +75,6 @@ export const VendorApplications: React.FC = () => {
         .eq('user_id', user_id)
         .eq('role', 'buyer');
 
-      console.log('Delete buyer role result:', { deleteError });
 
       // Add vendor role
       const { data: roleData, error: insertError } = await supabase
@@ -90,7 +87,6 @@ export const VendorApplications: React.FC = () => {
         .select()
         .single();
 
-      console.log('Insert vendor role result:', { roleData, insertError });
 
       if (insertError) throw insertError;
 
@@ -161,14 +157,6 @@ export const VendorApplications: React.FC = () => {
   const renderActionButtons = (application: any) => {
     const status = application.application_status?.toLowerCase();
     const isLoading = loadingStates[application.user_id] || false;
-
-    // Debug log for application data
-    console.log('Rendering action buttons for application:', {
-      id: application.id,
-      user_id: application.user_id,
-      status: status,
-      isLoading: isLoading
-    });
 
     // Only show actions for pending applications
     if (status === 'pending') {

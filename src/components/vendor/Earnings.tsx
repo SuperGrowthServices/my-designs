@@ -66,7 +66,6 @@ export const Earnings: React.FC = () => {
     if (!user) return;
 
     try {
-      console.log('Fetching earnings data for vendor:', user.id);
 
       // Get all shipped bids with earnings (90% of bid price)
       const { data: bidsData, error: bidsError } = await supabase

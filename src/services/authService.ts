@@ -4,7 +4,6 @@ import { ensureUserRecordsExist } from './userRecordService';
 
 export const signUp = async (data: SignUpData) => {
   try {
-    console.log('Starting signup process...', data);
     const redirectUrl = `${window.location.origin}/`;
     
     // 1. First create the auth user
