@@ -6,6 +6,7 @@ import { Security } from '@/components/dashboard/Security';
 import { DeliveryAddresses } from '@/components/dashboard/DeliveryAddresses';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useUserRoles } from '@/hooks/useUserRoles'; // Add this import
+import { BuyerDeliveryCard } from './BuyerDeliveryCard';
 
 interface SettingsContentProps {
   userProfile: any;
@@ -142,12 +143,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
         <div className="space-y-6">
           <Settings userProfile={userProfile} onProfileUpdate={onProfileUpdate} />
           <Security />
+          <BuyerDeliveryCard userProfile={userProfile} onProfileUpdate={onProfileUpdate} />
           {renderVendorSection()}
-        </div>
-
-        {/* Right Side - Delivery Addresses */}
-        <div className="space-y-6">
-          <DeliveryAddresses onAddressUpdate={onProfileUpdate} />
         </div>
       </div>
     </div>
