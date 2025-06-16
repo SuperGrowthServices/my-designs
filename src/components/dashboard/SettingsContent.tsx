@@ -138,7 +138,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
         <p className="text-gray-600">Manage your account settings and preferences.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         {/* Left Side - Profile & Security */}
         <div className="space-y-6">
           <Settings userProfile={userProfile} onProfileUpdate={onProfileUpdate} />

@@ -751,16 +751,7 @@ export const QuoteHistory: React.FC = () => {
                                         <strong>Notes:</strong> {part.winning_bid.notes}
                                       </p>
                                     )}
-                                    <Button size="sm" variant="outline" className="mt-2" asChild>
-                                      <a
-                                        href={`https://wa.me/${part.winning_bid.vendor.whatsapp_number}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        <MessageCircle className="w-4 h-4 mr-1" />
-                                        Contact Vendor
-                                      </a>
-                                    </Button>
+
                                   </div>
                                 )}
                               </div>
