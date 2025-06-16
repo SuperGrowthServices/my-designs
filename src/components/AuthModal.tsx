@@ -8,6 +8,17 @@ import { useToast } from '@/hooks/use-toast';
 import { SignupConfirmationModal } from './SignupConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 import { SignInResponse } from '@/types/auth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const UAE_EMIRATES = [
+  'Abu Dhabi',
+  'Dubai',
+  'Sharjah',
+  'Ajman',
+  'Umm Al Quwain',
+  'Ras Al Khaimah',
+  'Fujairah'
+] as const;
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -77,7 +88,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
           password: formData.password,
           userData: {
             full_name: formData.fullName,
-            whatsapp_number: formData.whatsappNumber,
+            whatsapp_number: `971${formData.whatsappNumber}`, // Add prefix here
             location: formData.location,
             ...vendorData
           }
@@ -171,24 +182,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
           <Label htmlFor="whatsappNumber">
             WhatsApp Number <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="whatsappNumber"
-            value={formData.whatsappNumber}
-            onChange={(e) => setFormData(prev => ({ ...prev, whatsappNumber: e.target.value }))}
-            required
-          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              +971
+            </span>
+            <Input
+              id="whatsappNumber"
+              value={formData.whatsappNumber}
+              onChange={(e) => {
+                // Remove any non-numeric characters and the prefix if entered
+                const cleaned = e.target.value.replace(/\D/g, '').replace(/^971/, '');
+                setFormData(prev => ({ ...prev, whatsappNumber: cleaned }))
+              }}
+              className="pl-14"
+              placeholder="50 123 4567"
+              required
+            />
+          </div>
+          <p className="text-xs text-gray-500">Enter your number without the country code</p>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="location">
-            Location <span className="text-red-500">*</span>
+            Emirate <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="location"
-            value={formData.location}
-            onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+          <Select 
+            value={formData.location} 
+            onValueChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
             required
-          />
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Emirate" />
+            </SelectTrigger>
+            <SelectContent>
+              {UAE_EMIRATES.map((emirate) => (
+                <SelectItem key={emirate} value={emirate}>
+                  {emirate}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {signupType === 'vendor' && (
