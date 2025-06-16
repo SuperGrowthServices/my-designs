@@ -28,20 +28,23 @@ export const signUp = async (data: SignUpData) => {
     if (authData.user) {
       const userId = authData.user.id;
 
-      // 2. Create user record in users table
+      // 2. Create user record in users table with upsert to avoid duplicates
       const { error: userError } = await supabase
         .from('users')
-        .insert([{
+        .upsert([{
           id: userId,
           email: data.email,
-        }]);
+        }], {
+          onConflict: 'id',
+          ignoreDuplicates: true
+        });
 
       if (userError) throw userError;
 
-      // 3. Create user profile
+      // 3. Create user profile with upsert
       const { error: profileError } = await supabase
         .from('user_profiles')
-        .insert([{
+        .upsert([{
           id: userId,
           user_id: userId,
           full_name: data.userData.full_name,
@@ -52,18 +55,24 @@ export const signUp = async (data: SignUpData) => {
           google_maps_url: data.userData.google_maps_url,
           application_status: data.userData.role === 'vendor' ? 'pending' : 'not_applied',
           application_submitted_at: data.userData.role === 'vendor' ? new Date().toISOString() : null
-        }]);
+        }], {
+          onConflict: 'id',
+          ignoreDuplicates: true
+        });
 
       if (profileError) throw profileError;
 
-      // 4. Create user role in the separate user_roles table
+      // 4. Create user role with upsert
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert([{
+        .upsert([{
           user_id: userId,
           role: data.userData.role,
           is_approved: data.userData.role === 'buyer' // Only buyers are auto-approved
-        }]);
+        }], {
+          onConflict: 'user_id',
+          ignoreDuplicates: true
+        });
 
       if (roleError) throw roleError;
     }

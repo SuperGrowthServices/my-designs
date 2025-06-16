@@ -68,9 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (event === 'SIGNED_IN' && session?.user) {
         setTimeout(async () => {
-          await ensureUserRecordsExist(session.user);
+          // Remove this line since we're handling it in signUp
+          // await ensureUserRecordsExist(session.user);
           const roles = await fetchUserRoles(session.user.id);
-          console.log('User roles:', roles); // ✅ Just log it here
+          console.log('User roles:', roles);
         }, 0);
       }
 
