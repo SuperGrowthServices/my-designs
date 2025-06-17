@@ -379,21 +379,6 @@ export const OrderCard: React.FC<OrderCardProps> = ({
         );
     };
 
-    // Helper function to check if a part has accepted bids
-    const hasAcceptedBids = (part: any) => {
-        return (part.bids || []).some((bid: any) => bid.status === "accepted");
-    };
-
-    // Helper function to check if a part has pending bids (and no accepted bids)
-    const hasPendingBidsToReview = (part: any) => {
-        const bids = part.bids || [];
-        const hasAccepted = bids.some((bid: any) => bid.status === "accepted");
-        const hasPending = bids.some((bid: any) => bid.status === "pending");
-        
-        // Only show review button if there are pending bids AND no accepted bids
-        return hasPending && !hasAccepted;
-    };
-
     return (
         <>
             <Card
@@ -485,8 +470,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        {/* Only show Review Bids button if part has pending bids AND no accepted bids */}
-                                                        {hasPendingBidsToReview(part) && (
+                                                        {/* Add Review Bids button following design pattern */}
+                                                        {(
+                                                            part.bids || []
+                                                        ).filter(
+                                                            (bid: any) =>
+                                                                bid.status ===
+                                                                "pending"
+                                                        ).length > 0 && (
                                                             <Button
                                                                 variant="default"
                                                                 size="sm"
