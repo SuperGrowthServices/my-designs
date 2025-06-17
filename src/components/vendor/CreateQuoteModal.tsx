@@ -14,13 +14,15 @@ interface CreateQuoteModalProps {
   orderId: string;
   onClose: () => void;
   onAddQuote: (orderId: string, partId: string, newQuote: MyQuote) => void;
+  onQuoteSubmitted?: () => void;  // Add this new prop
 }
 
 export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
   part,
   orderId,
   onClose,
-  onAddQuote
+  onAddQuote,
+  onQuoteSubmitted  // Add this
 }) => {
   if (!part) return null;
 
@@ -118,6 +120,7 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
       };
 
       onAddQuote(orderId, part.id, newQuote);
+      onQuoteSubmitted?.();  // Call the refresh function after successful submission
       onClose();
       
       toast({
