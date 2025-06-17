@@ -20,8 +20,7 @@ interface VendorDashboardLayoutProps {
   activeTab: VendorDashboardTab;
   onTabChange: (tab: VendorDashboardTab) => void;
   userProfile?: any;
-  onSwitchToBuyer: () => void;  // Add this
-  isAdmin: boolean;              // Add this
+  isAdmin: boolean;              // Only keep isAdmin
 }
 
 export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
@@ -29,8 +28,7 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
   activeTab,
   onTabChange,
   userProfile,
-  onSwitchToBuyer,  // Add this
-  isAdmin           // Add this
+  isAdmin
 }) => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -53,16 +51,8 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
 
   const footer = (
     <div className="space-y-3">
-      <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
-        <Button
-          onClick={onSwitchToBuyer}
-          variant="outline"
-          className="w-full text-sm"
-        >
-          Switch to Buyer Mode
-        </Button>
-        
-        {isAdmin && (
+      {isAdmin && (
+        <div className="space-y-2 border-b border-gray-200 pb-3 mb-3">
           <Button
             onClick={() => navigate('/admin')}
             variant="outline"
@@ -71,8 +61,8 @@ export const VendorDashboardLayout: React.FC<VendorDashboardLayoutProps> = ({
             <Shield className="w-4 h-4 mr-2" />
             Admin Mode
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       <Button
         onClick={signOut}

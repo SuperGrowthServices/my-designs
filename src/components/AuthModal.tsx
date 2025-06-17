@@ -110,7 +110,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
         } else {
           onClose();
           if (signupType === 'vendor') {
-            navigate('/vendor/pending');
+            navigate('/vendor/status');
           } else {
             navigate('/dashboard');
           }
