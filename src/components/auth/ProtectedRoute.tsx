@@ -14,55 +14,64 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
   requireApproval = false
 }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     const checkAuthorization = async () => {
+      if (loading) return;
+
       if (!user) {
-        navigate('/');
+        navigate('/', { replace: true });
         return;
       }
 
-      // Check user roles
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role, is_approved')
-        .eq('user_id', user.id)
-        .single();
-
-      // If role check fails, redirect to home
-      if (!roleData || !allowedRoles.includes(roleData.role)) {
-        navigate('/');
-        return;
-      }
-
-      // If approval is required, check vendor status
-      if (requireApproval && roleData.role === 'vendor') {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('application_status')
-          .eq('id', user.id)
+      try {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role, is_approved')
+          .eq('user_id', user.id)
           .single();
 
-        if (!roleData.is_approved || profile?.application_status !== 'approved') {
-          navigate('/vendor/status');
+        if (!roleData || !allowedRoles.includes(roleData.role)) {
+          navigate('/', { replace: true });
           return;
         }
-      }
 
-      setIsAuthorized(true);
-      setLoading(false);
+        if (requireApproval && roleData.role === 'vendor') {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('application_status')
+            .eq('id', user.id)
+            .single();
+
+          if (!roleData.is_approved || profile?.application_status !== 'approved') {
+            navigate('/vendor/status', { replace: true });
+            return;
+          }
+        }
+
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        navigate('/', { replace: true });
+      } finally {
+        setCheckingAuth(false);
+      }
     };
 
     checkAuthorization();
-  }, [user, allowedRoles, requireApproval, navigate]);
+  }, [user, loading, allowedRoles, requireApproval, navigate]);
 
-  if (loading) {
-    return <div>Loading...</div>;
+  if (loading || checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
   }
 
-  return isAuthorized ? <>{children}</> : null;
+  return isAuthorized ? children : null;
 };

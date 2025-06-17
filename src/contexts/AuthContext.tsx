@@ -59,37 +59,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        setTimeout(async () => {
-          // Remove this line since we're handling it in signUp
-          // await ensureUserRecordsExist(session.user);
-          const roles = await fetchUserRoles(session.user.id);
-        }, 0);
+    // 1. Get initial session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          
+          // Fetch roles for the user
+          if (initialSession.user) {
+            const roles = await fetchUserRoles(initialSession.user.id);
+            const updatedUser = {
+              ...initialSession.user,
+              user_metadata: {
+                ...initialSession.user.user_metadata,
+                roles
+              }
+            };
+            setUser(updatedUser);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setLoading(false);
-    }
-  );
+    initializeAuth();
 
-  supabase.auth.getSession().then(async ({ data: { session } }) => {
-    setSession(session);
-    setUser(session?.user ?? null);
+    // 2. Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log('Auth state changed:', event);
+        
+        if (newSession) {
+          setSession(newSession);
+          setUser(newSession.user);
 
-    if (session?.user) {
-      const roles = await fetchUserRoles(session.user.id);
-    }
+          if (newSession.user) {
+            const roles = await fetchUserRoles(newSession.user.id);
+            const updatedUser = {
+              ...newSession.user,
+              user_metadata: {
+                ...newSession.user.user_metadata,
+                roles
+              }
+            };
+            setUser(updatedUser);
+          }
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+      }
+    );
 
-    setLoading(false);
-  });
-
-  return () => subscription.unsubscribe();
-}, []);
-
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const signUp = async (data: SignUpData) => {
     return authSignUp(data);
