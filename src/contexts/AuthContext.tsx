@@ -70,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     let mounted = true;
     let authSubscription: any = null;
 
@@ -172,6 +173,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
   }, []);
+=======
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        setTimeout(async () => {
+          // Remove this line since we're handling it in signUp
+          // await ensureUserRecordsExist(session.user);
+          const roles = await fetchUserRoles(session.user.id);
+        }, 0);
+      }
+
+      setLoading(false);
+    }
+  );
+
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
+    setSession(session);
+    setUser(session?.user ?? null);
+
+    if (session?.user) {
+      const roles = await fetchUserRoles(session.user.id);
+    }
+
+    setLoading(false);
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
+>>>>>>> parent of 6aada41 (logout error)
 
   const signUp = async (data: SignUpData) => {
     return authSignUp(data);
