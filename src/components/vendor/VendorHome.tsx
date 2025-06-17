@@ -327,6 +327,10 @@ export const VendorHome: React.FC = () => {
         setSelectedVehicle(null);
         setActiveModal(null);
     };
+    const handleRefreshData = () => {
+        handleLoadData();
+    };
+
     return (
         <div className="bg-slate-50 min-h-screen">
             <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
@@ -508,6 +512,7 @@ export const VendorHome: React.FC = () => {
                     } : null}
                     onClose={handleCloseModals}
                     onAddQuote={handleBidUpdate}
+                    onRefreshData={handleRefreshData}
                 />
                 <UpdateQuoteModal
                     order={activeModal === 'update' || activeModal === 'view' ? {
