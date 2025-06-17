@@ -1,0 +1,1 @@
+export type DashboardTab = 'home' | 'quotes' | 'support' | 'settings' | 'vendor-application';

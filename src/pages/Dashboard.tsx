@@ -11,8 +11,7 @@ import { UserRoleGuard } from '@/components/dashboard/UserRoleGuard';
 import { SettingsContent } from '@/components/dashboard/SettingsContent';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-
-export type DashboardTab = 'home' | 'quotes' | 'support' | 'settings' | 'vendor-application';
+import { DashboardTab } from '@/types/dashboard';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
