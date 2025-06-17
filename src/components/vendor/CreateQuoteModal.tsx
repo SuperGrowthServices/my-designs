@@ -125,6 +125,12 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
         description: `Your quote for ${part.partName} has been sent to the buyer.`,
         variant: "success",
       });
+      // Auto-refresh the page after successful submission
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500) // Small delay to show the success toast
+
+      onClose()
     } catch (error: any) {
       console.error('Error submitting quote:', error);
       toast({
