@@ -17,7 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/integrations/supabase/client"
@@ -31,7 +30,6 @@ import {
   Receipt,
   MessageCircle,
   Package,
-  TrendingUp,
   Clock,
   Truck,
   RefreshCw,
@@ -89,9 +87,8 @@ interface OrderHistoryItem {
       condition: string
       warranty: string
       notes: string | null
-      status: 'pending' | 'accepted' | 'rejected'; // or whatever your actual enum values are
+      status: "pending" | "accepted" | "rejected" // or whatever your actual enum values are
 
-      
       vendor: {
         full_name: string
         business_name: string | null
@@ -119,20 +116,19 @@ export const QuoteHistory: React.FC = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [refundReason, setRefundReason] = useState("")
   const [stats, setStats] = useState({
-  totalOrders: 0,
-  totalSpent: 0,
-  avgOrderValue: 0,
-  awaitingQuotes: 0,
-  quoteReceived: 0,
-  paymentPending: 0,
-  processing: 0,
-  partiallyDelivered: 0,
-  delivered: 0,
-  completed: 0,
-  cancelled: 0,
-  refunded: 0,
-});
-
+    totalOrders: 0,
+    totalSpent: 0,
+    avgOrderValue: 0,
+    awaitingQuotes: 0,
+    quoteReceived: 0,
+    paymentPending: 0,
+    processing: 0,
+    partiallyDelivered: 0,
+    delivered: 0,
+    completed: 0,
+    cancelled: 0,
+    refunded: 0,
+  })
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("")
@@ -263,59 +259,50 @@ export const QuoteHistory: React.FC = () => {
 
       // Calculate stats
       // Calculate stats
-const totalSpent = transformedOrders.reduce(
-  (sum, order) => sum + (order.status === "completed" ? order.total_amount : 0),
-  0,
-)
+      const totalSpent = transformedOrders.reduce(
+        (sum, order) => sum + (order.status === "completed" ? order.total_amount : 0),
+        0,
+      )
 
-const statsCalculation = {
-  totalOrders: transformedOrders.length,
-  totalSpent,
-  avgOrderValue: 0, // Will calculate below
-  awaitingQuotes: transformedOrders.filter(order => 
-    order.parts.every(part => part.shipping_status === 'waiting_for_bid' && !part.winning_bid)
-  ).length,
-  quoteReceived: transformedOrders.filter(order => 
-    order.parts.some(part => 
-      (part.winning_bid?.status === 'pending' || part.winning_bid?.status === 'accepted') && 
-      !order.is_paid
-    )
-  ).length,
-  paymentPending: transformedOrders.filter(order => 
-    order.status === 'ready_for_checkout' && !order.is_paid
-  ).length,
-  processing: transformedOrders.filter(order => 
-    order.is_paid && 
-    order.parts.some(part => 
-      !['collected', 'admin_collected', 'delivered'].includes(part.shipping_status)
-    )
-  ).length,
-  partiallyDelivered: transformedOrders.filter(order => 
-    order.is_paid &&
-    order.parts.some(part => ['collected', 'admin_collected', 'delivered'].includes(part.shipping_status)) &&
-    order.parts.some(part => !['delivered'].includes(part.shipping_status))
-  ).length,
-  delivered: transformedOrders.filter(order => 
-    order.parts.every(part => part.shipping_status === 'delivered') &&
-    order.status !== 'completed'
-  ).length,
-  completed: transformedOrders.filter(order => 
-    order.status === 'completed'
-  ).length,
-  cancelled: transformedOrders.filter(order => 
-    order.status === 'cancelled'
-  ).length,
-  refunded: transformedOrders.filter(order => 
-    order.status === 'refunded'
-  ).length,
-}
+      const statsCalculation = {
+        totalOrders: transformedOrders.length,
+        totalSpent,
+        avgOrderValue: 0, // Will calculate below
+        awaitingQuotes: transformedOrders.filter((order) =>
+          order.parts.every((part) => part.shipping_status === "waiting_for_bid" && !part.winning_bid),
+        ).length,
+        quoteReceived: transformedOrders.filter((order) =>
+          order.parts.some(
+            (part) =>
+              (part.winning_bid?.status === "pending" || part.winning_bid?.status === "accepted") && !order.is_paid,
+          ),
+        ).length,
+        paymentPending: transformedOrders.filter((order) => order.status === "ready_for_checkout" && !order.is_paid)
+          .length,
+        processing: transformedOrders.filter(
+          (order) =>
+            order.is_paid &&
+            order.parts.some((part) => !["collected", "admin_collected", "delivered"].includes(part.shipping_status)),
+        ).length,
+        partiallyDelivered: transformedOrders.filter(
+          (order) =>
+            order.is_paid &&
+            order.parts.some((part) => ["collected", "admin_collected", "delivered"].includes(part.shipping_status)) &&
+            order.parts.some((part) => !["delivered"].includes(part.shipping_status)),
+        ).length,
+        delivered: transformedOrders.filter(
+          (order) => order.parts.every((part) => part.shipping_status === "delivered") && order.status !== "completed",
+        ).length,
+        completed: transformedOrders.filter((order) => order.status === "completed").length,
+        cancelled: transformedOrders.filter((order) => order.status === "cancelled").length,
+        refunded: transformedOrders.filter((order) => order.status === "refunded").length,
+      }
 
-// Calculate average order value
-statsCalculation.avgOrderValue = statsCalculation.completed > 0 
-  ? statsCalculation.totalSpent / statsCalculation.completed 
-  : 0
+      // Calculate average order value
+      statsCalculation.avgOrderValue =
+        statsCalculation.completed > 0 ? statsCalculation.totalSpent / statsCalculation.completed : 0
 
-setStats(statsCalculation)
+      setStats(statsCalculation)
     } catch (error) {
       console.error("Error fetching order history:", error)
     } finally {
@@ -411,29 +398,36 @@ setStats(statsCalculation)
     }
   }
 
-  const getStatusBadge = (status: string) => {
-  const statusConfig = {
-    awaiting_quotes: { variant: "secondary" as const, icon: Clock, color: "text-yellow-600" },
-    quote_received: { variant: "secondary" as const, icon: MessageCircle, color: "text-blue-400" },
-    payment_pending: { variant: "secondary" as const, icon: CreditCard, color: "text-orange-600" },
-    processing: { variant: "secondary" as const, icon: RefreshCw, color: "text-purple-600" },
-    partially_delivered: { variant: "secondary" as const, icon: Package, color: "text-indigo-600" },
-    delivered: { variant: "default" as const, icon: Truck, color: "text-green-500" },
-    completed: { variant: "default" as const, icon: CheckCircle, color: "text-green-600" },
-    cancelled: { variant: "destructive" as const, icon: XCircle, color: "text-red-600" },
-    refunded: { variant: "secondary" as const, icon: RotateCcw, color: "text-gray-600" },
+  const handleViewReceipt = (orderId: string) => {
+    navigate(`/receipt/${orderId}`)
   }
 
-  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.awaiting_quotes
-  const Icon = config.icon
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      awaiting_quotes: { variant: "secondary" as const, icon: Clock, color: "text-yellow-600" },
+      quote_received: { variant: "secondary" as const, icon: MessageCircle, color: "text-blue-400" },
+      payment_pending: { variant: "secondary" as const, icon: CreditCard, color: "text-orange-600" },
+      processing: { variant: "secondary" as const, icon: RefreshCw, color: "text-purple-600" },
+      partially_delivered: { variant: "secondary" as const, icon: Package, color: "text-indigo-600" },
+      delivered: { variant: "default" as const, icon: Truck, color: "text-green-500" },
+      completed: { variant: "default" as const, icon: CheckCircle, color: "text-green-600" },
+      cancelled: { variant: "destructive" as const, icon: XCircle, color: "text-red-600" },
+      refunded: { variant: "secondary" as const, icon: RotateCcw, color: "text-gray-600" },
+    }
 
-  return (
-    <Badge variant={config.variant} className="flex items-center gap-1">
-      <Icon className="w-3 h-3" />
-      {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-    </Badge>
-  )
-}
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.awaiting_quotes
+    const Icon = config.icon
+
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {status
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")}
+      </Badge>
+    )
+  }
 
   const getShippingStatusBadge = (status: string) => {
     const statusConfig = {
@@ -512,74 +506,74 @@ setStats(statsCalculation)
 
       {/* Stats Cards */}
       {/* Stats Cards */}
-<div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Total Orders</p>
-          <p className="text-2xl font-bold">{stats.totalOrders}</p>
-        </div>
-        <Package className="w-8 h-8 text-blue-600" />
-      </div>
-    </CardContent>
-  </Card>
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Awaiting Quotes</p>
-          <p className="text-2xl font-bold">{stats.awaitingQuotes}</p>
-        </div>
-        <Clock className="w-8 h-8 text-yellow-600" />
-      </div>
-    </CardContent>
-  </Card>
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Quote Received</p>
-          <p className="text-2xl font-bold">{stats.quoteReceived}</p>
-        </div>
-        <MessageCircle className="w-8 h-8 text-blue-400" />
-      </div>
-    </CardContent>
-  </Card>
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Payment Pending</p>
-          <p className="text-2xl font-bold">{stats.paymentPending}</p>
-        </div>
-        <CreditCard className="w-8 h-8 text-orange-600" />
-      </div>
-    </CardContent>
-  </Card>
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">In Transit</p>
-          <p className="text-2xl font-bold">{stats.processing}</p>
-        </div>
-        <RefreshCw className="w-8 h-8 text-purple-600" />
-      </div>
-    </CardContent>
-  </Card>
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Delivered</p>
-          <p className="text-2xl font-bold">{stats.partiallyDelivered}</p>
-        </div>
-        <Package className="w-8 h-8 text-indigo-600" />
-      </div>
-    </CardContent>
-  </Card>
-  {/* <Card>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Orders</p>
+                <p className="text-2xl font-bold">{stats.totalOrders}</p>
+              </div>
+              <Package className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Awaiting Quotes</p>
+                <p className="text-2xl font-bold">{stats.awaitingQuotes}</p>
+              </div>
+              <Clock className="w-8 h-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Quote Received</p>
+                <p className="text-2xl font-bold">{stats.quoteReceived}</p>
+              </div>
+              <MessageCircle className="w-8 h-8 text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Payment Pending</p>
+                <p className="text-2xl font-bold">{stats.paymentPending}</p>
+              </div>
+              <CreditCard className="w-8 h-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">In Transit</p>
+                <p className="text-2xl font-bold">{stats.processing}</p>
+              </div>
+              <RefreshCw className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Delivered</p>
+                <p className="text-2xl font-bold">{stats.partiallyDelivered}</p>
+              </div>
+              <Package className="w-8 h-8 text-indigo-600" />
+            </div>
+          </CardContent>
+        </Card>
+        {/* <Card>
     <CardContent className="p-4">
       <div className="flex items-center justify-between">
         <div>
@@ -590,40 +584,40 @@ setStats(statsCalculation)
       </div>
     </CardContent>
   </Card> */}
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Completed</p>
-          <p className="text-2xl font-bold">{stats.completed}</p>
-        </div>
-        <CheckCircle className="w-8 h-8 text-green-600" />
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-2xl font-bold">{stats.completed}</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Cancelled</p>
+                <p className="text-2xl font-bold">{stats.cancelled}</p>
+              </div>
+              <XCircle className="w-8 h-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Refunded</p>
+                <p className="text-2xl font-bold">{stats.refunded}</p>
+              </div>
+              <RotateCcw className="w-8 h-8 text-gray-600" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </CardContent>
-  </Card>
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Cancelled</p>
-          <p className="text-2xl font-bold">{stats.cancelled}</p>
-        </div>
-        <XCircle className="w-8 h-8 text-red-600" />
-      </div>
-    </CardContent>
-  </Card>
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Refunded</p>
-          <p className="text-2xl font-bold">{stats.refunded}</p>
-        </div>
-        <RotateCcw className="w-8 h-8 text-gray-600" />
-      </div>
-    </CardContent>
-  </Card>
-</div>
 
       {/* Filters */}
       <Card>
@@ -789,12 +783,12 @@ setStats(statsCalculation)
                         </a>
                       </Button>
                     )}
-                    {/* {order.status === "completed" && (
-                      // <Button size="sm" variant="outline" onClick={() => handleReorder(order.id)}>
-                      //   <RefreshCw className="w-4 h-4 mr-1" />
-                      //   Reorder
-                      // </Button>
-                    )} */}
+                    {order.is_paid && (
+                      <Button size="sm" variant="outline" onClick={() => handleViewReceipt(order.id)}>
+                        <Receipt className="w-4 h-4 mr-1" />
+                        Receipt
+                      </Button>
+                    )}
                     {order.status === "completed" && order.refund_requests.length === 0 && (
                       <Button
                         size="sm"
@@ -815,9 +809,8 @@ setStats(statsCalculation)
               {expandedOrders.has(order.id) && (
                 <CardContent className="pt-0">
                   <Tabs defaultValue="parts" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="parts">Parts</TabsTrigger>
-                      <TabsTrigger value="payment">Payment</TabsTrigger>
                       <TabsTrigger value="delivery">Delivery</TabsTrigger>
                       <TabsTrigger value="refunds">Refunds</TabsTrigger>
                     </TabsList>
@@ -869,86 +862,36 @@ setStats(statsCalculation)
                                         <strong>Notes:</strong> {part.winning_bid.notes}
                                       </p>
                                     )}
-
                                   </div>
                                 )}
                               </div>
-<div>
-  <h5 className="font-medium mb-2">Shipping Status</h5>
-  {order.is_paid ? (
-    <>
-      {getShippingStatusBadge(part.shipping_status)}
-      <div className="mt-2 space-y-1 text-sm text-gray-600">
-        {part.collected_at && (
-          <p>Collected: {format(new Date(part.collected_at), "MMM dd, yyyy")}</p>
-        )}
-        {part.shipped_at && (
-          <p>Shipped: {format(new Date(part.shipped_at), "MMM dd, yyyy")}</p>
-        )}
-        {part.delivered_at && (
-          <p>Delivered: {format(new Date(part.delivered_at), "MMM dd, yyyy")}</p>
-        )}
-      </div>
-    </>
-  ) : (
-    <p className="text-sm text-gray-500">Shipping information will be available after payment</p>
-  )}
-</div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </TabsContent>
-
-                    <TabsContent value="payment" className="space-y-4">
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="font-semibold mb-3">Payment Details</h4>
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span>Subtotal:</span>
-                                  <span>AED {order.subtotal.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>VAT (5%):</span>
-                                  <span>AED {order.vat_amount.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Service Fee:</span>
-                                  <span>AED {order.service_fee.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Delivery Fee:</span>
-                                  <span>AED {order.delivery_fee.toFixed(2)}</span>
-                                </div>
-                                <Separator />
-                                <div className="flex justify-between font-semibold">
-                                  <span>Total:</span>
-                                  <span>AED {order.total_amount.toFixed(2)}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="font-semibold mb-3">Payment Status</h4>
-                              <div className="space-y-2">
-                                <Badge
-                                  variant={order.payment_status === "paid" ? "default" : "secondary"}
-                                  className="mb-2"
-                                >
-                                  {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
-                                </Badge>
-                                {order.paid_at && (
-                                  <p className="text-sm text-gray-600">
-                                    Paid on: {format(new Date(order.paid_at), "MMM dd, yyyy HH:mm")}
+                              <div>
+                                <h5 className="font-medium mb-2">Shipping Status</h5>
+                                {order.is_paid ? (
+                                  <>
+                                    {getShippingStatusBadge(part.shipping_status)}
+                                    <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                      {part.collected_at && (
+                                        <p>Collected: {format(new Date(part.collected_at), "MMM dd, yyyy")}</p>
+                                      )}
+                                      {part.shipped_at && (
+                                        <p>Shipped: {format(new Date(part.shipped_at), "MMM dd, yyyy")}</p>
+                                      )}
+                                      {part.delivered_at && (
+                                        <p>Delivered: {format(new Date(part.delivered_at), "MMM dd, yyyy")}</p>
+                                      )}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <p className="text-sm text-gray-500">
+                                    Shipping information will be available after payment
                                   </p>
                                 )}
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </TabsContent>
 
                     <TabsContent value="delivery" className="space-y-4">
