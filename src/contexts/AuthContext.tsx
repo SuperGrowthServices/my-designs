@@ -21,98 +21,155 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initializingAuth, setInitializingAuth] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
 
   const fetchUserRoles = async (userId: string): Promise<string[]> => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-    if (error) {
-      console.error('Failed to fetch roles:', error);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Failed to fetch roles:', error);
+        return [];
+      }
+
+      return data.map((r) => r.role);
+    } catch (error) {
+      console.error('Error in fetchUserRoles:', error);
       return [];
     }
-
-    return data.map((r) => r.role);
   };
 
-  const attachRolesToUserMetadata = async (session: Session) => {
-    if (!session?.user) return;
+  const updateUserWithRoles = async (currentSession: Session) => {
+    if (!currentSession?.user) return currentSession;
 
-    const roles = await fetchUserRoles(session.user.id);
+    try {
+      const roles = await fetchUserRoles(currentSession.user.id);
 
-    const updatedUser = {
-      ...session.user,
-      user_metadata: {
-        ...session.user.user_metadata,
-        roles
-      }
-    };
+      const updatedUser = {
+        ...currentSession.user,
+        user_metadata: {
+          ...currentSession.user.user_metadata,
+          roles
+        }
+      };
 
-    // Update state with new metadata
-    setSession({
-      ...session,
-      user: updatedUser
-    });
+      const updatedSession = {
+        ...currentSession,
+        user: updatedUser
+      };
 
-    setUser(updatedUser);
+      return updatedSession;
+    } catch (error) {
+      console.error('Error updating user with roles:', error);
+      return currentSession;
+    }
   };
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription: any = null;
 
     const initialize = async () => {
       try {
-        // 1. Get initial session
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initializing auth...');
         
+        // Get initial session with retry logic
+        let sessionData = null;
+        let retries = 3;
+        
+        while (retries > 0 && !sessionData) {
+          const { data } = await supabase.auth.getSession();
+          sessionData = data;
+          
+          if (!sessionData.session && retries > 1) {
+            // Wait a bit before retrying
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          retries--;
+        }
+
         if (!mounted) return;
 
-        if (session?.user) {
-          setSession(session);
-          setUser(session.user);
-          // Fetch roles in parallel
-          const roles = await fetchUserRoles(session.user.id);
+        if (sessionData.session?.user) {
+          console.log('Found existing session:', sessionData.session.user.id);
+          
+          // Update session and user with roles
+          const sessionWithRoles = await updateUserWithRoles(sessionData.session);
+          
           if (mounted) {
-            await attachRolesToUserMetadata(session);
+            setSession(sessionWithRoles);
+            setUser(sessionWithRoles.user);
           }
+        } else {
+          console.log('No existing session found');
+          setSession(null);
+          setUser(null);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+        }
       } finally {
         if (mounted) {
-          setInitializingAuth(false);
           setLoading(false);
+          setInitialized(true);
         }
       }
     };
 
-    initialize();
+    // Set up auth state listener first
+    const setupAuthListener = () => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        if (!mounted) return;
 
-    // 2. Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
-      
-      if (!mounted) return;
-
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
         try {
-          await attachRolesToUserMetadata(session);
+          if (session?.user) {
+            // Update session with roles
+            const sessionWithRoles = await updateUserWithRoles(session);
+            
+            if (mounted) {
+              setSession(sessionWithRoles);
+              setUser(sessionWithRoles.user);
+            }
+          } else {
+            setSession(null);
+            setUser(null);
+          }
         } catch (error) {
-          console.error('Error attaching roles:', error);
+          console.error('Error in auth state change handler:', error);
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
         }
-      }
-      
-      setLoading(false);
-    });
+        
+        if (mounted && initialized) {
+          setLoading(false);
+        }
+      });
+
+      return subscription;
+    };
+
+    // Initialize auth
+    initialize();
+    
+    // Set up listener
+    authSubscription = setupAuthListener();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -125,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       const result = await authSignIn(email, password);
 
-      // Handle case where result doesn't have data
       if (!result.data?.user) {
         return {
           data: null,
@@ -143,7 +199,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (roleError) {
         console.error('Error fetching user role:', roleError);
-        // Return successful auth but with default role
         return {
           data: result.data,
           error: null,
@@ -151,7 +206,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // Return successful result with role
       return {
         data: result.data,
         error: null,
@@ -174,18 +228,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return authSignOut(toast);
   };
 
-  // Add this value to context
   const value = {
     user,
     session,
-    loading: loading || initializingAuth, // Combine loading states
+    loading: loading || !initialized,
     signUp,
     signIn,
     signOut
   };
 
-  // Don't render children until auth is initialized
-  if (initializingAuth) {
+  // Show loading spinner until auth is fully initialized
+  if (!initialized || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
