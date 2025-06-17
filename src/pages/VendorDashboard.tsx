@@ -116,7 +116,6 @@ const VendorDashboard = () => {
       activeTab={activeTab} 
       onTabChange={setActiveTab}
       userProfile={userProfile}
-      onSwitchToBuyer={handleSwitchToBuyer}
       isAdmin={isAdmin()}
     >
       {renderContent()}
