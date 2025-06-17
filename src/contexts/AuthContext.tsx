@@ -21,6 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initializingAuth, setInitializingAuth] = useState(true);
   const { toast } = useToast();
 
   const fetchUserRoles = async (userId: string): Promise<string[]> => {
@@ -59,34 +60,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserRoles(session.user.id); // Fetch roles for initial session
+    let mounted = true;
+
+    const initialize = async () => {
+      try {
+        // 1. Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+
+        if (session?.user) {
+          setSession(session);
+          setUser(session.user);
+          // Fetch roles in parallel
+          const roles = await fetchUserRoles(session.user.id);
+          if (mounted) {
+            await attachRolesToUserMetadata(session);
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        if (mounted) {
+          setInitializingAuth(false);
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    });
+    };
+
+    initialize();
 
     // 2. Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id); // Add logging
+      console.log('Auth state changed:', event, session?.user?.id);
+      
+      if (!mounted) return;
+
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await fetchUserRoles(session.user.id);
+        try {
+          await attachRolesToUserMetadata(session);
+        } catch (error) {
+          console.error('Error attaching roles:', error);
+        }
       }
       
       setLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
-
 
   const signUp = async (data: SignUpData) => {
     return authSignUp(data);
@@ -146,14 +174,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return authSignOut(toast);
   };
 
+  // Add this value to context
   const value = {
     user,
     session,
-    loading,
+    loading: loading || initializingAuth, // Combine loading states
     signUp,
     signIn,
     signOut
   };
+
+  // Don't render children until auth is initialized
+  if (initializingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
