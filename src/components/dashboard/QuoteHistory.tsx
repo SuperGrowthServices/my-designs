@@ -89,6 +89,9 @@ interface OrderHistoryItem {
       condition: string
       warranty: string
       notes: string | null
+      status: 'pending' | 'accepted' | 'rejected'; // or whatever your actual enum values are
+
+      
       vendor: {
         full_name: string
         business_name: string | null
@@ -116,13 +119,20 @@ export const QuoteHistory: React.FC = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [refundReason, setRefundReason] = useState("")
   const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalSpent: 0,
-    avgOrderValue: 0,
-    completedOrders: 0,
-    pendingDeliveries: 0,
-    activeRefunds: 0,
-  })
+  totalOrders: 0,
+  totalSpent: 0,
+  avgOrderValue: 0,
+  awaitingQuotes: 0,
+  quoteReceived: 0,
+  paymentPending: 0,
+  processing: 0,
+  partiallyDelivered: 0,
+  delivered: 0,
+  completed: 0,
+  cancelled: 0,
+  refunded: 0,
+});
+
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("")
@@ -238,6 +248,8 @@ export const QuoteHistory: React.FC = () => {
                     condition: winningBid.condition,
                     warranty: winningBid.warranty,
                     notes: winningBid.notes,
+                    status: winningBid.status,
+
                     vendor: winningBid.vendor,
                   }
                 : null,
@@ -250,26 +262,60 @@ export const QuoteHistory: React.FC = () => {
       setOrders(transformedOrders)
 
       // Calculate stats
-      const totalSpent = transformedOrders.reduce(
-        (sum, order) => sum + (order.status === "completed" ? order.total_amount : 0),
-        0,
-      )
-      const completedCount = transformedOrders.filter((order) => order.status === "completed").length
-      const pendingDeliveries = transformedOrders.filter((order) =>
-        order.parts.some((part) => ["pending_pickup", "collected", "admin_collected"].includes(part.shipping_status)),
-      ).length
-      const activeRefunds = transformedOrders.filter((order) =>
-        order.refund_requests.some((req) => req.status === "pending"),
-      ).length
+      // Calculate stats
+const totalSpent = transformedOrders.reduce(
+  (sum, order) => sum + (order.status === "completed" ? order.total_amount : 0),
+  0,
+)
 
-      setStats({
-        totalOrders: transformedOrders.length,
-        totalSpent,
-        avgOrderValue: completedCount > 0 ? totalSpent / completedCount : 0,
-        completedOrders: completedCount,
-        pendingDeliveries,
-        activeRefunds,
-      })
+const statsCalculation = {
+  totalOrders: transformedOrders.length,
+  totalSpent,
+  avgOrderValue: 0, // Will calculate below
+  awaitingQuotes: transformedOrders.filter(order => 
+    order.parts.every(part => part.shipping_status === 'waiting_for_bid' && !part.winning_bid)
+  ).length,
+  quoteReceived: transformedOrders.filter(order => 
+    order.parts.some(part => 
+      (part.winning_bid?.status === 'pending' || part.winning_bid?.status === 'accepted') && 
+      !order.is_paid
+    )
+  ).length,
+  paymentPending: transformedOrders.filter(order => 
+    order.status === 'ready_for_checkout' && !order.is_paid
+  ).length,
+  processing: transformedOrders.filter(order => 
+    order.is_paid && 
+    order.parts.some(part => 
+      !['collected', 'admin_collected', 'delivered'].includes(part.shipping_status)
+    )
+  ).length,
+  partiallyDelivered: transformedOrders.filter(order => 
+    order.is_paid &&
+    order.parts.some(part => ['collected', 'admin_collected', 'delivered'].includes(part.shipping_status)) &&
+    order.parts.some(part => !['delivered'].includes(part.shipping_status))
+  ).length,
+  delivered: transformedOrders.filter(order => 
+    order.parts.every(part => part.shipping_status === 'delivered') &&
+    order.status !== 'completed'
+  ).length,
+  completed: transformedOrders.filter(order => 
+    order.status === 'completed'
+  ).length,
+  cancelled: transformedOrders.filter(order => 
+    order.status === 'cancelled'
+  ).length,
+  refunded: transformedOrders.filter(order => 
+    order.status === 'refunded'
+  ).length,
+}
+
+// Calculate average order value
+statsCalculation.avgOrderValue = statsCalculation.completed > 0 
+  ? statsCalculation.totalSpent / statsCalculation.completed 
+  : 0
+
+setStats(statsCalculation)
     } catch (error) {
       console.error("Error fetching order history:", error)
     } finally {
@@ -366,23 +412,28 @@ export const QuoteHistory: React.FC = () => {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      open: { variant: "secondary" as const, icon: Clock, color: "text-yellow-600" },
-      completed: { variant: "default" as const, icon: CheckCircle, color: "text-green-600" },
-      cancelled: { variant: "destructive" as const, icon: XCircle, color: "text-red-600" },
-      refunded: { variant: "secondary" as const, icon: RotateCcw, color: "text-blue-600" },
-    }
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.open
-    const Icon = config.icon
-
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <Icon className="w-3 h-3" />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    )
+  const statusConfig = {
+    awaiting_quotes: { variant: "secondary" as const, icon: Clock, color: "text-yellow-600" },
+    quote_received: { variant: "secondary" as const, icon: MessageCircle, color: "text-blue-400" },
+    payment_pending: { variant: "secondary" as const, icon: CreditCard, color: "text-orange-600" },
+    processing: { variant: "secondary" as const, icon: RefreshCw, color: "text-purple-600" },
+    partially_delivered: { variant: "secondary" as const, icon: Package, color: "text-indigo-600" },
+    delivered: { variant: "default" as const, icon: Truck, color: "text-green-500" },
+    completed: { variant: "default" as const, icon: CheckCircle, color: "text-green-600" },
+    cancelled: { variant: "destructive" as const, icon: XCircle, color: "text-red-600" },
+    refunded: { variant: "secondary" as const, icon: RotateCcw, color: "text-gray-600" },
   }
+
+  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.awaiting_quotes
+  const Icon = config.icon
+
+  return (
+    <Badge variant={config.variant} className="flex items-center gap-1">
+      <Icon className="w-3 h-3" />
+      {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+    </Badge>
+  )
+}
 
   const getShippingStatusBadge = (status: string) => {
     const statusConfig = {
@@ -460,52 +511,119 @@ export const QuoteHistory: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Orders</p>
-                <p className="text-2xl font-bold">{stats.totalOrders}</p>
-              </div>
-              <Package className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-2xl font-bold">{stats.completedOrders}</p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">In Transit</p>
-                <p className="text-2xl font-bold">{stats.pendingDeliveries}</p>
-              </div>
-              <Truck className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Refunds</p>
-                <p className="text-2xl font-bold">{stats.activeRefunds}</p>
-              </div>
-              <RotateCcw className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+<div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Total Orders</p>
+          <p className="text-2xl font-bold">{stats.totalOrders}</p>
+        </div>
+        <Package className="w-8 h-8 text-blue-600" />
       </div>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Awaiting Quotes</p>
+          <p className="text-2xl font-bold">{stats.awaitingQuotes}</p>
+        </div>
+        <Clock className="w-8 h-8 text-yellow-600" />
+      </div>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Quote Received</p>
+          <p className="text-2xl font-bold">{stats.quoteReceived}</p>
+        </div>
+        <MessageCircle className="w-8 h-8 text-blue-400" />
+      </div>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Payment Pending</p>
+          <p className="text-2xl font-bold">{stats.paymentPending}</p>
+        </div>
+        <CreditCard className="w-8 h-8 text-orange-600" />
+      </div>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">In Transit</p>
+          <p className="text-2xl font-bold">{stats.processing}</p>
+        </div>
+        <RefreshCw className="w-8 h-8 text-purple-600" />
+      </div>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Delivered</p>
+          <p className="text-2xl font-bold">{stats.partiallyDelivered}</p>
+        </div>
+        <Package className="w-8 h-8 text-indigo-600" />
+      </div>
+    </CardContent>
+  </Card>
+  {/* <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Delivered</p>
+          <p className="text-2xl font-bold">{stats.delivered}</p>
+        </div>
+        <Truck className="w-8 h-8 text-green-500" />
+      </div>
+    </CardContent>
+  </Card> */}
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Completed</p>
+          <p className="text-2xl font-bold">{stats.completed}</p>
+        </div>
+        <CheckCircle className="w-8 h-8 text-green-600" />
+      </div>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Cancelled</p>
+          <p className="text-2xl font-bold">{stats.cancelled}</p>
+        </div>
+        <XCircle className="w-8 h-8 text-red-600" />
+      </div>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">Refunded</p>
+          <p className="text-2xl font-bold">{stats.refunded}</p>
+        </div>
+        <RotateCcw className="w-8 h-8 text-gray-600" />
+      </div>
+    </CardContent>
+  </Card>
+</div>
 
       {/* Filters */}
       <Card>
