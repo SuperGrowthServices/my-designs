@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Accordion,
@@ -10,53 +9,73 @@ import {
 const FAQ = () => {
   const faqData = [
     {
-      category: "Orders & Delivery",
+      category: "Ordering & Payments",
       questions: [
         {
-          question: "How can I track my order?",
-          answer: "You can track your order through your dashboard. Once your order is confirmed, you'll receive a tracking link via email and SMS updates."
+          question: "How does EasyAuto work?",
+          answer: "EasyAuto is an online platform that connects you with multiple auto parts vendors. You request parts, receive quotes from vendors, and place orders directly through our platform."
+        },
+        {
+          question: "Who do I pay when I place an order?",
+          answer: "All payments are securely processed through EasyAuto. We handle the full payment process and pay the vendors directly once your order is completed."
+        },
+        {
+          question: "Are prices fixed or do I receive quotes?",
+          answer: "You will receive multiple quotes from vendors based on your part request. You can then select your preferred offer."
+        },
+        {
+          question: "What payment methods are accepted?",
+          answer: "Payments are processed securely via Stripe. We accept credit cards, debit cards, and other payment methods available at checkout."
+        },
+        {
+          question: "Is my order confirmed immediately after payment?",
+          answer: "Yes — once payment is successfully processed, your order is confirmed and moved into the delivery preparation stage."
+        }
+      ]
+    },
+    {
+      category: "Shipping & Delivery",
+      questions: [
+        {
+          question: "Who handles the delivery?",
+          answer: "EasyAuto manages delivery through approved logistics partners. Your parts will be collected directly from vendors and delivered to your provided address."
         },
         {
           question: "How long does delivery take?",
-          answer: "Delivery times vary by location and part availability. Most orders are delivered within 1-3 business days in major UAE cities."
+          answer: "Delivery times may vary depending on vendor preparation and courier schedules. You will be notified once your order is dispatched."
         },
         {
-          question: "Can I modify my order after placing it?",
-          answer: "Orders can be modified within the first hour of placement. After that, please contact our support team for assistance."
+          question: "Can I track my order?",
+          answer: "Yes — you can track your order status through your Buyer Dashboard once your order is dispatched."
         }
       ]
     },
     {
-      category: "Parts & Warranty",
+      category: "Refunds, Returns & Cancellations",
       questions: [
         {
-          question: "What is your warranty policy?",
-          answer: "We offer manufacturer warranties on genuine OEM parts and our own warranty on aftermarket parts. Warranty periods vary by part type and manufacturer."
+          question: "Can I cancel an order after payment?",
+          answer: "Once payment is processed, cancellations may only be possible if the vendor agrees and if the order hasn't been dispatched. Please contact our support team immediately."
         },
         {
-          question: "How do I know if a part is compatible with my vehicle?",
-          answer: "Our system automatically filters parts based on your vehicle details. Additionally, our vendors verify compatibility before confirming orders."
+          question: "What is the refund policy?",
+          answer: `Each vendor sets their own refund and return policy. Refund windows may be:
+          
+• No Refund
+• 3 Days
+• 7 Days
+• 14 Days (rare)
+• 30 Days (very rare)
+
+You will see the refund policy for each part before confirming your order.`
         },
         {
-          question: "Do you sell genuine OEM parts?",
-          answer: "Yes, we work with authorized dealers and verified suppliers who provide both genuine OEM and high-quality aftermarket parts."
-        }
-      ]
-    },
-    {
-      category: "Payments & Pricing",
-      questions: [
-        {
-          question: "What payment methods do you accept?",
-          answer: "We accept credit cards, debit cards, bank transfers, and cash on delivery for eligible orders."
+          question: "How do I request a refund?",
+          answer: "Refund requests must be submitted directly through your Buyer Dashboard within the applicable refund period."
         },
         {
-          question: "How does the bidding system work?",
-          answer: "After you submit a part request, verified vendors submit competitive bids. You can compare prices, delivery times, and vendor ratings before choosing."
-        },
-        {
-          question: "Are there any hidden fees?",
-          answer: "No hidden fees. All costs including part price, delivery, and any applicable taxes are clearly displayed before you confirm your order."
+          question: "How will refunds be processed?",
+          answer: "Once approved, refunds will be processed back to your original payment method."
         }
       ]
     }
@@ -70,14 +89,17 @@ const FAQ = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Find answers to common questions or contact our support team.
+            Everything you need to know about ordering parts through EasyAuto
           </p>
         </div>
 
         <div className="max-w-4xl mx-auto space-y-8">
           {faqData.map((category, categoryIndex) => (
             <div key={categoryIndex} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                {category.category === "Ordering & Payments" && "🔧"}
+                {category.category === "Shipping & Delivery" && "🚚"}
+                {category.category === "Refunds, Returns & Cancellations" && "🔄"}
                 {category.category}
               </h3>
               
@@ -88,10 +110,10 @@ const FAQ = () => {
                     value={`${categoryIndex}-${questionIndex}`}
                     className="border border-gray-100 rounded-lg px-4"
                   >
-                    <AccordionTrigger className="text-base font-medium text-gray-800 hover:text-primary">
+                    <AccordionTrigger className="text-base font-medium text-gray-800 hover:text-primary text-left">
                       {item.question}
                     </AccordionTrigger>
-                    <AccordionContent className="text-gray-600 text-base leading-relaxed">
+                    <AccordionContent className="text-gray-600 text-base leading-relaxed whitespace-pre-line">
                       {item.answer}
                     </AccordionContent>
                   </AccordionItem>

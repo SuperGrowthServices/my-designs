@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -175,13 +174,13 @@ export const Support: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen pb-12"> {/* Add min-h-screen and pb-12 */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Support Center</h1>
         <p className="text-gray-600">Find answers to common questions or contact our support team.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
         {/* FAQs Section */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Frequently Asked Questions</h2>

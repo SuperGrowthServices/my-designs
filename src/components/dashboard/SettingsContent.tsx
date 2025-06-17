@@ -132,14 +132,13 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   };
 
   return (
-    <div>
+    <div className="min-h-screen pb-12"> {/* Add min-h-screen and pb-12 */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
         <p className="text-gray-600">Manage your account settings and preferences.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
-        {/* Left Side - Profile & Security */}
         <div className="space-y-6">
           <Settings userProfile={userProfile} onProfileUpdate={onProfileUpdate} />
           <Security />
