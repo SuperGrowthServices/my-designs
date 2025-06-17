@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -168,6 +167,7 @@ export const CheckoutPage: React.FC = () => {
           <div className="space-y-6">
             <OrderSummary acceptedBids={acceptedBids} />
             <DeliveryForm 
+              userId={user?.id} // Pass the user ID to DeliveryForm
               deliveryAddress={deliveryAddress}
               onDeliveryAddressChange={setDeliveryAddress}
               selectedDeliveryOption={selectedDeliveryOption}
