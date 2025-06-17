@@ -43,71 +43,60 @@ export const VendorApplications: React.FC = () => {
   };
 
   const handleApprove = async (user_id: string) => {
+  if (!user_id) {
+    console.error('Invalid user_id:', user_id);
+    toast({
+      title: "Error",
+      description: "Invalid user ID. Please try again.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setLoadingStates(prev => ({ ...prev, [user_id]: true }));
+  
+  try {
+    // Update application status in user_profiles
+    const { data: profileData, error: updateError } = await supabase
+      .from('user_profiles')
+      .update({ application_status: 'approved' })
+      .eq('user_id', user_id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Update user role to vendor and set is_approved to true
+    const { data: roleData, error: roleUpdateError } = await supabase
+      .from('user_roles')
+      .update({ 
+        role: 'vendor',
+        is_approved: true 
+      })
+      .eq('user_id', user_id)
+      .select()
+      .single();
+
+    if (roleUpdateError) throw roleUpdateError;
+
+    await refetchVendorApplications();
     
-    if (!user_id) {
-      console.error('Invalid user_id:', user_id);
-      toast({
-        title: "Error",
-        description: "Invalid user ID. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoadingStates(prev => ({ ...prev, [user_id]: true }));
-    
-    try {
-      // Update application status
-      const { data: profileData, error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ application_status: 'approved' })
-        .eq('user_id', user_id)
-        .select()
-        .single();
-
-
-      if (updateError) throw updateError;
-
-      // Delete buyer role if exists
-      const { error: deleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', user_id)
-        .eq('role', 'buyer');
-
-
-      // Add vendor role
-      const { data: roleData, error: insertError } = await supabase
-        .from('user_roles')
-        .insert([{ 
-          user_id, 
-          role: 'vendor',
-          is_approved: true 
-        }])
-        .select()
-        .single();
-
-
-      if (insertError) throw insertError;
-
-      await refetchVendorApplications();
-      
-      toast({
-        title: "Application approved",
-        description: "Vendor application has been approved successfully.",
-        variant: "default",
-      });
-    } catch (error) {
-      console.error('Approval failed:', error);
-      toast({
-        title: "Error",
-        description: `Failed to approve the application: ${error.message}`,
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [user_id]: false }));
-    }
-  };
+    toast({
+      title: "Application approved",
+      description: "Vendor application has been approved successfully.",
+      variant: "default",
+    });
+  } catch (error) {
+    console.error('Approval failed:', error);
+    toast({
+      title: "Error",
+      description: `Failed to approve the application: ${error.message}`,
+      variant: "destructive",
+    });
+  } finally {
+    setLoadingStates(prev => ({ ...prev, [user_id]: false }));
+  }
+};
 
   const handleReject = async (user_id: string) => {
     // Open rejection dialog instead of immediate rejection
