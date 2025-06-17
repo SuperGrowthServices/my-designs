@@ -1,9 +1,10 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Download, Printer, ArrowLeft } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 export const ReceiptActions: React.FC = () => {
   const navigate = useNavigate();
@@ -13,11 +14,38 @@ export const ReceiptActions: React.FC = () => {
     window.print();
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     toast({
-      title: "Download started",
-      description: "Your receipt PDF is being generated...",
+      title: "Generating PDF...",
+      description: "Your receipt is being downloaded.",
     });
+
+    try {
+      // Capture the entire page (or a specific element with `document.getElementById('receipt')`)
+      const canvas = await html2canvas(document.body);
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Create a PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+      });
+
+      // Calculate PDF dimensions to fit the content
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save('receipt.pdf');
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF.",
+        variant: "destructive",
+      });
+      console.error("PDF generation failed:", error);
+    }
   };
 
   return (
