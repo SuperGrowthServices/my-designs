@@ -10,33 +10,32 @@ interface OrderDetailsModalProps {
   order: VendorOrder | null;
   onClose: () => void;
   onAddQuote: (orderId: string, partId: string, newQuote: MyQuote) => void;
+  onRefreshData?: () => void; // Add optional onRefreshData prop
 }
 
 export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
   order,
   onClose,
-  onAddQuote
+  onAddQuote,
+  onRefreshData
 }) => {
-  if (!order) return null;
-  
   const [quotePart, setQuotePart] = useState<VendorPart | null>(null);
 
-  const handleOpenQuoteModal = (part: VendorPart) => {
-    setQuotePart(part);
+  const handleQuoteSubmitted = () => {
+    setQuotePart(null);  // Close the quote modal
+    onRefreshData?.();   // Refresh the data
+    onClose();          // Close the order details modal
   };
 
-  const handleCloseAll = () => {
-    setQuotePart(null);
-    onClose();
-  };
+  if (!order) return null;
 
   return (
-    <div onClick={handleCloseAll} className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+    <div onClick={onClose} className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         <div className="p-6 border-b">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-slate-800">Quote Request: <span className="text-blue-600">{order.orderId}</span></h2>
-            <Button onClick={handleCloseAll} variant="ghost" size="icon">
+            <Button onClick={onClose} variant="ghost" size="icon">
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -76,7 +75,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                         </Accordion>
                       )}
                     </div>
-                    <Button onClick={() => handleOpenQuoteModal(part)} className="bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={() => setQuotePart(part)} className="bg-blue-600 hover:bg-blue-700">
                       Quote
                     </Button>
                   </div>
@@ -85,15 +84,16 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             </div>
           ))}
         </div>
+        {quotePart && (
+          <CreateQuoteModal
+            part={quotePart}
+            orderId={order.id}
+            onClose={() => setQuotePart(null)}
+            onAddQuote={onAddQuote}
+            onQuoteSubmitted={handleQuoteSubmitted}  // Pass down the handler
+          />
+        )}
       </div>
-      {quotePart && (
-        <CreateQuoteModal
-          part={quotePart}
-          orderId={order.id}
-          onClose={() => setQuotePart(null)}
-          onAddQuote={onAddQuote}
-        />
-      )}
     </div>
   );
 };

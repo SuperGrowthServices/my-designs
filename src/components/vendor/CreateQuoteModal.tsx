@@ -9,18 +9,21 @@ import { Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+
 interface CreateQuoteModalProps {
-  part: VendorPart | null;
+  part: VendorPart;
   orderId: string;
   onClose: () => void;
-  onAddQuote: (orderId: string, partId: string, newQuote: MyQuote) => void;
+  onAddQuote: (orderId: string, partId: string, quote: MyQuote) => void;
+  onQuoteSubmitted?: () => void;
 }
 
 export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
   part,
   orderId,
   onClose,
-  onAddQuote
+  onAddQuote,
+  onQuoteSubmitted
 }) => {
   if (!part) return null;
 
@@ -33,18 +36,10 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async () => {
-    if (!price) {
-      toast({
-        title: "Missing Price",
-        description: "Please enter a price for your quote",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       // Get current user (vendor)
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -118,12 +113,13 @@ export const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({
       };
 
       onAddQuote(orderId, part.id, newQuote);
-      onClose();
+      onQuoteSubmitted?.();  // This will trigger parent modal close
+      onClose();  // Close this modal
       
       toast({
-        title: "Quote Submitted Successfully!",
-        description: `Your quote for ${part.partName} has been sent to the buyer.`,
-        variant: "success",
+        title: "Quote submitted successfully",
+        description: "Your quote has been sent to the buyer.",
+        variant: "success"
       });
     } catch (error: any) {
       console.error('Error submitting quote:', error);
