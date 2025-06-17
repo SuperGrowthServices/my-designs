@@ -17,6 +17,7 @@ import VendorDesign from './pages/VendorDesign';
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { DriverLoginPage } from '@/pages/DriverLoginPage';
 import { DriverDashboardPage } from '@/pages/DriverDashboardPage';
+import { VendorApplicationStatus } from './pages/VendorApplicationStatus';
 
 const queryClient = new QueryClient();
 
@@ -37,9 +38,15 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Protected Vendor Routes */}
+              {/* Vendor Routes */}
+              <Route path="/vendor/status" element={
+                <ProtectedRoute allowedRoles={['vendor']}>
+                  <VendorApplicationStatus />
+                </ProtectedRoute>
+              } />
+              
               <Route path="/vendor" element={
-                <ProtectedRoute allowedRoles={['vendor', 'admin']}>
+                <ProtectedRoute allowedRoles={['vendor']} requireApproval>
                   <VendorDashboard />
                 </ProtectedRoute>
               } />

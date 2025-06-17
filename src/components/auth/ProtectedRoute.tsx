@@ -1,59 +1,68 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles: string[];
+  requireApproval?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { user, loading } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [checkingRole, setCheckingRole] = useState(true);
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  allowedRoles,
+  requireApproval = false
+}) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) return;
+    const checkAuthorization = async () => {
+      if (!user) {
+        navigate('/');
+        return;
+      }
 
-      const { data, error } = await supabase
+      // Check user roles
+      const { data: roleData } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('role, is_approved')
         .eq('user_id', user.id)
         .single();
 
-      if (!error && data) {
-        setUserRole(data.role);
-      } else {
-        // Default to buyer if no role found
-        setUserRole('buyer');
+      // If role check fails, redirect to home
+      if (!roleData || !allowedRoles.includes(roleData.role)) {
+        navigate('/');
+        return;
       }
-      setCheckingRole(false);
+
+      // If approval is required, check vendor status
+      if (requireApproval && roleData.role === 'vendor') {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('application_status')
+          .eq('id', user.id)
+          .single();
+
+        if (!roleData.is_approved || profile?.application_status !== 'approved') {
+          navigate('/vendor/status');
+          return;
+        }
+      }
+
+      setIsAuthorized(true);
+      setLoading(false);
     };
 
-    fetchUserRole();
-  }, [user]);
+    checkAuthorization();
+  }, [user, allowedRoles, requireApproval, navigate]);
 
-  if (loading || checkingRole) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (!user) {
-    return <Navigate to="/" />;
-  }
-
-  if (!userRole || !allowedRoles.includes(userRole)) {
-    // Redirect based on actual user role
-    switch (userRole) {
-      case 'admin':
-        return <Navigate to="/admin" />;
-      case 'vendor':
-        return <Navigate to="/vendor" />;
-      default:
-        return <Navigate to="/dashboard" />;
-    }
-  }
-
-  return <>{children}</>;
+  return isAuthorized ? <>{children}</> : null;
 };
