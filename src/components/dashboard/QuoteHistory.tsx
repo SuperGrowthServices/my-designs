@@ -755,21 +755,27 @@ export const QuoteHistory: React.FC = () => {
                                   </div>
                                 )}
                               </div>
-                              <div>
-                                <h5 className="font-medium mb-2">Shipping Status</h5>
-                                {getShippingStatusBadge(part.shipping_status)}
-                                <div className="mt-2 space-y-1 text-sm text-gray-600">
-                                  {part.collected_at && (
-                                    <p>Collected: {format(new Date(part.collected_at), "MMM dd, yyyy")}</p>
-                                  )}
-                                  {part.shipped_at && (
-                                    <p>Shipped: {format(new Date(part.shipped_at), "MMM dd, yyyy")}</p>
-                                  )}
-                                  {part.delivered_at && (
-                                    <p>Delivered: {format(new Date(part.delivered_at), "MMM dd, yyyy")}</p>
-                                  )}
-                                </div>
-                              </div>
+<div>
+  <h5 className="font-medium mb-2">Shipping Status</h5>
+  {order.is_paid ? (
+    <>
+      {getShippingStatusBadge(part.shipping_status)}
+      <div className="mt-2 space-y-1 text-sm text-gray-600">
+        {part.collected_at && (
+          <p>Collected: {format(new Date(part.collected_at), "MMM dd, yyyy")}</p>
+        )}
+        {part.shipped_at && (
+          <p>Shipped: {format(new Date(part.shipped_at), "MMM dd, yyyy")}</p>
+        )}
+        {part.delivered_at && (
+          <p>Delivered: {format(new Date(part.delivered_at), "MMM dd, yyyy")}</p>
+        )}
+      </div>
+    </>
+  ) : (
+    <p className="text-sm text-gray-500">Shipping information will be available after payment</p>
+  )}
+</div>
                             </div>
                           </CardContent>
                         </Card>

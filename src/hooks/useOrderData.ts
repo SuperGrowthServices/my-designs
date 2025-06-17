@@ -19,7 +19,6 @@ export const useOrderData = () => {
     const cacheExpiry = 30 * 1000; // 30 seconds
     
     if (!forceRefresh && lastFetchTime && (now - lastFetchTime) < cacheExpiry) {
-      console.log('Using cached order data');
       return;
     }
 
@@ -88,7 +87,6 @@ export const useOrderData = () => {
         // Check for accepted bids with detailed logging
         const hasAcceptedBids = order.parts?.some((part: any) => {
           const acceptedBidsCount = part.bids?.filter((bid: any) => bid.status === 'accepted').length || 0;
-          console.log(`Part ${part.id} has ${acceptedBidsCount} accepted bids out of ${part.bids?.length || 0} total bids`);
           return acceptedBidsCount > 0;
         }) || false;
 
