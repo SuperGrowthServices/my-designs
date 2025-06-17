@@ -59,36 +59,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserRoles(session.user.id); // Fetch roles for initial session
+      }
+      setLoading(false);
+    });
+
+    // 2. Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id); // Add logging
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        setTimeout(async () => {
-          // Remove this line since we're handling it in signUp
-          // await ensureUserRecordsExist(session.user);
-          const roles = await fetchUserRoles(session.user.id);
-        }, 0);
+      if (session?.user) {
+        await fetchUserRoles(session.user.id);
       }
-
+      
       setLoading(false);
-    }
-  );
+    });
 
-  supabase.auth.getSession().then(async ({ data: { session } }) => {
-    setSession(session);
-    setUser(session?.user ?? null);
-
-    if (session?.user) {
-      const roles = await fetchUserRoles(session.user.id);
-    }
-
-    setLoading(false);
-  });
-
-  return () => subscription.unsubscribe();
-}, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
 
   const signUp = async (data: SignUpData) => {

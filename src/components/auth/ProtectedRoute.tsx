@@ -14,53 +14,39 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
   requireApproval = false
 }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    const checkAuthorization = async () => {
+    const checkAuth = async () => {
+      if (loading) return;
+      
       if (!user) {
-        navigate('/');
+        navigate('/', { replace: true });
         return;
       }
 
-      // Check user roles
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role, is_approved')
         .eq('user_id', user.id)
         .single();
 
-      // If role check fails, redirect to home
       if (!roleData || !allowedRoles.includes(roleData.role)) {
-        navigate('/');
+        navigate('/', { replace: true });
         return;
       }
 
-      // If approval is required, check vendor status
-      if (requireApproval && roleData.role === 'vendor') {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('application_status')
-          .eq('id', user.id)
-          .single();
-
-        if (!roleData.is_approved || profile?.application_status !== 'approved') {
-          navigate('/vendor/status');
-          return;
-        }
-      }
-
       setIsAuthorized(true);
-      setLoading(false);
+      setCheckingAuth(false);
     };
 
-    checkAuthorization();
-  }, [user, allowedRoles, requireApproval, navigate]);
+    checkAuth();
+  }, [user, loading, allowedRoles, navigate]);
 
-  if (loading) {
+  if (loading || checkingAuth) {
     return <div>Loading...</div>;
   }
 
