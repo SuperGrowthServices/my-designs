@@ -15,7 +15,7 @@ export const signUp = async (data: SignUpData) => {
         data: {
           full_name: data.userData.full_name,
           whatsapp_number: data.userData.whatsapp_number,
-          role: data.userData.role // Add role to auth metadata
+          role: data.userData.role // IMPORTANT: Keep role in auth metadata
         }
       }
     });
@@ -28,17 +28,20 @@ export const signUp = async (data: SignUpData) => {
     if (authData.user) {
       const userId = authData.user.id;
 
-      // 2. Create user record in users table
+      // 2. Create user record in users table with upsert to avoid duplicates
       const { error: userError } = await supabase
         .from('users')
         .upsert([{
           id: userId,
           email: data.email,
-        }]);
+        }], {
+          onConflict: 'id',
+          ignoreDuplicates: true
+        });
 
       if (userError) throw userError;
 
-      // 3. Create user role FIRST with upsert
+      // 3. Create user role FIRST with upsert (use ignoreDuplicates: false for updates)
       const { error: roleError } = await supabase
         .from('user_roles')
         .upsert([{
@@ -47,7 +50,7 @@ export const signUp = async (data: SignUpData) => {
           is_approved: data.userData.role === 'buyer'
         }], {
           onConflict: 'user_id',
-          ignoreDuplicates: false
+          ignoreDuplicates: false // Allow updates to role if needed
         });
 
       if (roleError) {
@@ -55,7 +58,7 @@ export const signUp = async (data: SignUpData) => {
         throw roleError;
       }
 
-      // 4. Create user profile
+      // 4. Create user profile with upsert
       const { error: profileError } = await supabase
         .from('user_profiles')
         .upsert([{
@@ -66,11 +69,14 @@ export const signUp = async (data: SignUpData) => {
           location: data.userData.location,
           business_name: data.userData.business_name,
           vendor_tags: data.userData.vendor_tags || [],
-          delivery_address: data.userData.delivery_address,
+          delivery_address: data.userData.delivery_address, // Re-added missing field
           google_maps_url: data.userData.google_maps_url,
           application_status: data.userData.role === 'vendor' ? 'pending' : 'not_applied',
           application_submitted_at: data.userData.role === 'vendor' ? new Date().toISOString() : null
-        }]);
+        }], {
+          onConflict: 'id',
+          ignoreDuplicates: false // Allow profile updates
+        });
 
       if (profileError) throw profileError;
     }
@@ -131,7 +137,8 @@ export const signOut = async (toast: any) => {
     });
   }
 };
-function toast(arg0: { title: string; description: string; }) {
-  throw new Error('Function not implemented.');
-}
 
+// Remove this problematic function definition
+// function toast(arg0: { title: string; description: string; }) {
+//   throw new Error('Function not implemented.');
+// }

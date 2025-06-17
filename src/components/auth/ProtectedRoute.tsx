@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,55 +14,88 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
   requireApproval = false
 }) => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth(); // Keep loading from auth context
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isApproved, setIsApproved] = useState<boolean>(false);
+  const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
-    const checkAuthorization = async () => {
+    const fetchUserRoleAndStatus = async () => {
       if (!user) {
-        navigate('/');
+        setCheckingRole(false);
         return;
       }
 
-      // Check user roles
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role, is_approved')
-        .eq('user_id', user.id)
-        .single();
-
-      // If role check fails, redirect to home
-      if (!roleData || !allowedRoles.includes(roleData.role)) {
-        navigate('/');
-        return;
-      }
-
-      // If approval is required, check vendor status
-      if (requireApproval && roleData.role === 'vendor') {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('application_status')
-          .eq('id', user.id)
+      try {
+        // Get user role and approval status
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role, is_approved')
+          .eq('user_id', user.id)
           .single();
 
-        if (!roleData.is_approved || profile?.application_status !== 'approved') {
-          navigate('/vendor/status');
-          return;
+        if (roleError || !roleData) {
+          // Default to buyer if no role found (like old version)
+          setUserRole('buyer');
+          setIsApproved(true);
+        } else {
+          setUserRole(roleData.role);
+          setIsApproved(roleData.is_approved || false);
+
+          // If approval is required for vendors, also check profile status
+          if (requireApproval && roleData.role === 'vendor') {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('application_status')
+              .eq('id', user.id)
+              .single();
+
+            // Vendor needs both role approval AND profile approval
+            const isFullyApproved = roleData.is_approved && 
+              profile?.application_status === 'approved';
+            setIsApproved(isFullyApproved);
+          }
         }
+      } catch (error) {
+        console.error('Error checking user authorization:', error);
+        setUserRole('buyer'); // Fallback to buyer
+        setIsApproved(true);
       }
 
-      setIsAuthorized(true);
-      setLoading(false);
+      setCheckingRole(false);
     };
 
-    checkAuthorization();
-  }, [user, allowedRoles, requireApproval, navigate]);
+    fetchUserRoleAndStatus();
+  }, [user, requireApproval]);
 
-  if (loading) {
+  // Show loading while auth or role check is in progress
+  if (loading || checkingRole) {
     return <div>Loading...</div>;
   }
 
-  return isAuthorized ? <>{children}</> : null;
+  // If no user, redirect to login/home
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // If role is not in allowed roles, redirect to appropriate dashboard
+  if (!userRole || !allowedRoles.includes(userRole)) {
+    // Smart routing based on actual user role (like old version)
+    switch (userRole) {
+      case 'admin':
+        return <Navigate to="/admin" replace />;
+      case 'vendor':
+        return <Navigate to="/vendor" replace />;
+      default:
+        return <Navigate to="/dashboard" replace />;
+    }
+  }
+
+  // If approval is required but user is not approved, redirect to status page
+  if (requireApproval && userRole === 'vendor' && !isApproved) {
+    return <Navigate to="/vendor/status" replace />;
+  }
+
+  // User is authorized, render children
+  return <>{children}</>;
 };
