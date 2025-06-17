@@ -9,6 +9,7 @@ import { SignupConfirmationModal } from './SignupConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 import { SignInResponse } from '@/types/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserRole } from '@/types/auth';  // Add this import
 
 const UAE_EMIRATES = [
   'Abu Dhabi',
@@ -71,27 +72,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupTyp
 
     try {
       if (isSignUp) {
-        const vendorData = signupType === 'vendor' ? {
-          business_name: formData.business_name,
-          bank_name: formData.bank_name,
-          bank_iban: formData.bank_iban,
-          vendor_tags: [], 
-          application_status: 'pending',
-          application_submitted_at: new Date().toISOString(),
-          role: 'vendor' as const
-        } : {
-          role: 'buyer' as const
+        // Fix the type of role to match UserRole type
+        const userData = {
+          full_name: formData.fullName,
+          whatsapp_number: `971${formData.whatsappNumber}`,
+          location: formData.location,
+          role: (signupType === 'vendor' ? 'vendor' : 'buyer') as UserRole,
+          // Add vendor specific data only if signing up as vendor
+          ...(signupType === 'vendor' && {
+            business_name: formData.business_name,
+            bank_name: formData.bank_name,
+            bank_iban: formData.bank_iban,
+            delivery_address: formData.delivery_address,
+            google_maps_url: formData.google_maps_url,
+            vendor_tags: [],
+            application_status: 'pending',
+            application_submitted_at: new Date().toISOString()
+          })
         };
 
         const { error, needsConfirmation } = await signUp({
           email: formData.email,
           password: formData.password,
-          userData: {
-            full_name: formData.fullName,
-            whatsapp_number: `971${formData.whatsappNumber}`, // Add prefix here
-            location: formData.location,
-            ...vendorData
-          }
+          userData
         });
 
         if (error) {
