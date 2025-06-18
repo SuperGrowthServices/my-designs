@@ -449,7 +449,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                         </div>
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
                             <div className="flex items-center gap-2">
-                                {order.hasAcceptedBids && hasPendingBids && (
+                                {order.hasAcceptedBids && !order.hasAcceptedBids && (
                                     <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1.5 text-xs">
                                         <Hourglass className="w-3 h-3" />
                                         Review Bids
