@@ -167,61 +167,75 @@ export const VendorHome: React.FC = () => {
     };
 
     const fetchLiveOrders = async () => {
-        if (!vendorProfileId) return;
-        try {
-            // First, get all open orders with their parts and bids
-            const { data, error } = await supabase
-                .from('orders')
-                .select(`
+    if (!vendorProfileId) return;
+    try {
+        // First, get all open orders with their parts and bids
+        const { data, error } = await supabase
+            .from('orders')
+            .select(`
+                *,
+                parts!inner(
                     *,
-                    parts!inner(
-                        *,
-                        vehicle:vehicles(*),
-                        bids(*)
-                    )
-                `)
-                .eq('status', 'open')
-                .order('created_at', { ascending: false });
-            if (error) throw error;
+                    vehicle:vehicles(*),
+                    bids(*)
+                )
+            `)
+            .eq('status', 'open')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
 
-            // Process orders...
-            const processedOrders = (data || [])
-                .map((order) => ({
-                    ...order,
-                    // Filter parts at the application level for more precise control
-                    parts: order.parts.filter(part => {
-                        if (!part.is_accepted) {
-                            // Show all non-accepted parts
-                            return true;
-                        }
-
-                        // For accepted parts, only show if this vendor's bid was accepted
+        // Process orders...
+        const processedOrders = (data || [])
+            .map((order) => ({
+                ...order,
+                // Filter parts at the application level for more precise control
+                parts: order.parts.filter(part => {
+                    // CRITICAL FIX: Hide parts that have been accepted by ANY vendor
+                    // This prevents other vendors from wasting time quoting on unavailable parts
+                    if (part.is_accepted) {
+                        // Only show accepted parts if THIS vendor's bid was the accepted one
                         return part.bids?.some(bid =>
                             bid.vendor_id === vendorProfileId &&
                             bid.status === 'accepted'
                         );
-                    })
-                        .map((part) => ({
-                            ...part,
-                            existing_bid: part.bids?.find(
-                                (bid) => bid.vendor_id === vendorProfileId
-                            ),
-                            other_bids_count:
-                                part.bids?.filter(
-                                    (b) =>
-                                        b.vendor_id !== vendorProfileId &&
-                                        b.status === 'pending'
-                                ).length || 0,
-                        }))
-                }))
-                // Remove orders that have no visible parts after filtering
-                .filter(order => order.parts.length > 0);
+                    }
 
-            setOrders(processedOrders);
-        } catch (error) {
-            console.error('Error fetching live orders:', error);
-        }
-    };
+                    // NEW LOGIC: Also hide parts where someone else's bid has been accepted
+                    // even if part.is_accepted isn't set yet (in case of data consistency issues)
+                    const hasAcceptedBid = part.bids?.some(bid => bid.status === 'accepted');
+                    if (hasAcceptedBid) {
+                        // Only show if this vendor's bid was the accepted one
+                        return part.bids?.some(bid =>
+                            bid.vendor_id === vendorProfileId &&
+                            bid.status === 'accepted'
+                        );
+                    }
+
+                    // Show all other parts (new parts or parts with pending bids)
+                    return true;
+                })
+                .map((part) => ({
+                    ...part,
+                    existing_bid: part.bids?.find(
+                        (bid) => bid.vendor_id === vendorProfileId
+                    ),
+                    other_bids_count:
+                        part.bids?.filter(
+                            (b) =>
+                                b.vendor_id !== vendorProfileId &&
+                                b.status === 'pending'
+                        ).length || 0,
+                }))
+            }))
+            // Remove orders that have no visible parts after filtering
+            .filter(order => order.parts.length > 0);
+
+        setOrders(processedOrders);
+    } catch (error) {
+        console.error('Error fetching live orders:', error);
+    }
+};
 
     const handleRefresh = () => {
         if (!refreshing) {
