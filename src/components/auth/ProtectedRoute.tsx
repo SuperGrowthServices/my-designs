@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,17 +7,21 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles: string[];
   requireApproval?: boolean;
+  isPaymentRoute?: boolean; // New prop to identify payment route
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   allowedRoles,
-  requireApproval = false
+  requireApproval = false,
+  isPaymentRoute = false
 }) => {
-  const { user, loading } = useAuth(); // Keep loading from auth context
+  const { user, loading } = useAuth();
+  const location = useLocation();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isApproved, setIsApproved] = useState<boolean>(false);
   const [checkingRole, setCheckingRole] = useState(true);
+  const [paymentSessionValid, setPaymentSessionValid] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchUserRoleAndStatus = async () => {
@@ -35,14 +39,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           .single();
 
         if (roleError || !roleData) {
-          // Default to buyer if no role found (like old version)
           setUserRole('buyer');
           setIsApproved(true);
         } else {
           setUserRole(roleData.role);
           setIsApproved(roleData.is_approved || false);
 
-          // If approval is required for vendors, also check profile status
           if (requireApproval && roleData.role === 'vendor') {
             const { data: profile } = await supabase
               .from('user_profiles')
@@ -50,7 +52,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               .eq('id', user.id)
               .single();
 
-            // Vendor needs both role approval AND profile approval
             const isFullyApproved = roleData.is_approved && 
               profile?.application_status === 'approved';
             setIsApproved(isFullyApproved);
@@ -58,7 +59,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         }
       } catch (error) {
         console.error('Error checking user authorization:', error);
-        setUserRole('buyer'); // Fallback to buyer
+        setUserRole('buyer');
         setIsApproved(true);
       }
 
@@ -68,19 +69,53 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     fetchUserRoleAndStatus();
   }, [user, requireApproval]);
 
+  useEffect(() => {
+    // Special handling for payment route
+    if (isPaymentRoute) {
+      const verifyPaymentSession = async () => {
+        const sessionId = new URLSearchParams(location.search).get('session_id');
+        if (!sessionId) {
+          setPaymentSessionValid(false);
+          return;
+        }
+
+        try {
+          const { data } = await supabase
+            .from('invoices')
+            .select('user_id')
+            .eq('stripe_session_id', sessionId)
+            .single();
+
+          setPaymentSessionValid(!!data);
+        } catch (error) {
+          console.error('Error verifying payment session:', error);
+          setPaymentSessionValid(false);
+        }
+      };
+
+      verifyPaymentSession();
+    }
+  }, [isPaymentRoute, location.search]);
+
   // Show loading while auth or role check is in progress
-  if (loading || checkingRole) {
+  if (loading || checkingRole || (isPaymentRoute && paymentSessionValid === null)) {
     return <div>Loading...</div>;
   }
 
-  // If no user, redirect to login/home
+  // Special case for payment route
+  if (isPaymentRoute) {
+    if (paymentSessionValid === false) {
+      return <Navigate to="/" replace />;
+    }
+    return <>{children}</>;
+  }
+
+  // Normal protected route logic
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  // If role is not in allowed roles, redirect to appropriate dashboard
   if (!userRole || !allowedRoles.includes(userRole)) {
-    // Smart routing based on actual user role (like old version)
     switch (userRole) {
       case 'admin':
         return <Navigate to="/admin" replace />;
@@ -91,11 +126,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  // If approval is required but user is not approved, redirect to status page
   if (requireApproval && userRole === 'vendor' && !isApproved) {
     return <Navigate to="/vendor/status" replace />;
   }
 
-  // User is authorized, render children
   return <>{children}</>;
 };
