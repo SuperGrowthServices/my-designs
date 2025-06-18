@@ -126,6 +126,15 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
     return `${option.name} - AED ${option.price.toFixed(2)} (${daysText})`;
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remove any non-numeric characters and the prefix if entered
+    const cleaned = e.target.value.replace(/\D/g, '').replace(/^971/, '');
+    onDeliveryInfoChange({
+      ...deliveryInfo,
+      contactNumber: cleaned
+    });
+  };
+
   if (isLoading) {
     return <div>Loading delivery information...</div>;
   }
@@ -253,14 +262,20 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
                   <Phone className="w-4 h-4" />
                   Delivery Contact Number *
                 </Label>
-                <Input
-                  id="contactNumber"
-                  type="tel"
-                  value={deliveryInfo.contactNumber}
-                  onChange={(e) => handleInputChange('contactNumber', e.target.value)}
-                  placeholder="+971 50 123 4567"
-                  required
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    +971
+                  </span>
+                  <Input
+                    id="contactNumber"
+                    value={deliveryInfo.contactNumber}
+                    onChange={handlePhoneChange}
+                    className="pl-14"
+                    placeholder="50 123 4567"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500">Enter your number without the country code</p>
               </div>
 
               {/* Special Instructions */}

@@ -34,29 +34,27 @@ export const Settings: React.FC<SettingsProps> = ({
     });
 
     useEffect(() => {
-        // Initialize profile data from userProfile or auth metadata
         if (userProfile) {
             setProfileData({
                 full_name: userProfile.full_name || "",
-                whatsapp_number: userProfile.whatsapp_number || "",
+                whatsapp_number: (userProfile.whatsapp_number || "").replace(/^971/, ''),
                 business_name: userProfile.business_name || "",
                 location: userProfile.location || "",
                 delivery_address: userProfile.delivery_address || "",
-                delivery_phone: userProfile.delivery_phone || "",
+                delivery_phone: (userProfile.delivery_phone || "").replace(/^971/, ''),
                 delivery_instructions: userProfile.delivery_instructions || "",
                 google_maps_url: userProfile.google_maps_url || "",
             });
         } else if (user?.user_metadata) {
-            // Fallback to auth metadata if profile doesn't exist
             const metadata = user.user_metadata;
             setProfileData({
                 full_name: metadata.full_name || metadata.name || "",
                 whatsapp_number:
-                    metadata.whatsapp_number || metadata.phone || "",
+(metadata.whatsapp_number || metadata.phone || "").replace(/^971/, ''),
                 business_name: metadata.business_name || "",
                 location: metadata.location || "",
                 delivery_address: metadata.delivery_address || "",
-                delivery_phone: metadata.delivery_phone || "",
+                delivery_phone: (metadata.delivery_phone || "").replace(/^971/, ''),
                 delivery_instructions: metadata.delivery_instructions || "",
                 google_maps_url: metadata.google_maps_url || "",
             });
@@ -70,6 +68,17 @@ export const Settings: React.FC<SettingsProps> = ({
         setLoading(true);
 
         try {
+            // Add 971 prefix when saving
+            const dataToSave = {
+                ...profileData,
+                whatsapp_number: profileData.whatsapp_number.startsWith('971') 
+                    ? profileData.whatsapp_number 
+                    : `971${profileData.whatsapp_number}`,
+                delivery_phone: profileData.delivery_phone.startsWith('971')
+                    ? profileData.delivery_phone
+                    : `971${profileData.delivery_phone}`,
+            };
+
             // Check if profile exists
             const { data: existingProfile } = await supabase
                 .from("user_profiles")
@@ -81,7 +90,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 // Update existing profile
                 const { error } = await supabase
                     .from("user_profiles")
-                    .update(profileData)
+                    .update(dataToSave)
                     .eq("id", user.id);
 
                 if (error) throw error;
@@ -89,7 +98,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 // Create new profile
                 const { error } = await supabase.from("user_profiles").insert({
                     id: user.id,
-                    ...profileData,
+                    ...dataToSave,
                     is_vendor: false,
                     vendor_tags: [],
                 });
@@ -143,17 +152,27 @@ export const Settings: React.FC<SettingsProps> = ({
 
                     <div className="space-y-2">
                         <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
-                        <Input
-                            id="whatsapp_number"
-                            value={profileData.whatsapp_number}
-                            onChange={(e) =>
-                                setProfileData((prev) => ({
-                                    ...prev,
-                                    whatsapp_number: e.target.value,
-                                }))
-                            }
-                            required
-                        />
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                                +971
+                            </span>
+                            <Input
+                                id="whatsapp_number"
+                                value={profileData.whatsapp_number}
+                                onChange={(e) => {
+                                    // Remove any non-numeric characters and the prefix if entered
+                                    const cleaned = e.target.value.replace(/\D/g, '').replace(/^971/, '');
+                                    setProfileData(prev => ({
+                                        ...prev,
+                                        whatsapp_number: cleaned
+                                    }));
+                                }}
+                                className="pl-14"
+                                placeholder="50 123 4567"
+                                required
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500">Enter your number without the country code</p>
                     </div>
 
                     <div className="space-y-2">
@@ -188,12 +207,37 @@ export const Settings: React.FC<SettingsProps> = ({
                         />
                     </div>
 
+                    <div className="space-y-2">
+                        <Label htmlFor="delivery_phone">Delivery Phone</Label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                                +971
+                            </span>
+                            <Input
+                                id="delivery_phone"
+                                value={profileData.delivery_phone}
+                                onChange={(e) => {
+                                    // Remove any non-numeric characters and the prefix if entered
+                                    const cleaned = e.target.value.replace(/\D/g, '').replace(/^971/, '');
+                                    setProfileData(prev => ({
+                                        ...prev,
+                                        delivery_phone: cleaned
+                                    }));
+                                }}
+                                className="pl-14"
+                                placeholder="50 123 4567"
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500">Enter your number without the country code</p>
+                    </div>
+
+                    {/* ...other form fields... */}
+
                     <Button type="submit" disabled={loading}>
                         {loading ? "Updating..." : "Update Profile"}
                     </Button>
                 </form>
             </CardContent>
         </Card>
-        
     );
 };
