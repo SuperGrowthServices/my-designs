@@ -210,11 +210,22 @@ export const OrderCard: React.FC<OrderCardProps> = ({
     const orderMetrics = useMemo(() => {
         const parts = order.parts || [];
         const totalParts = parts.length;
+        
+        // Only count pending bids for parts that don't have accepted bids
         const totalPendingBids = parts.reduce(
-            (sum: number, part: any) =>
-                sum +
-                (part.bids || []).filter((bid: any) => bid.status === "pending")
-                    .length,
+            (sum: number, part: any) => {
+                const bids = part.bids || [];
+                const hasAcceptedBid = bids.some((bid: any) => bid.status === "accepted");
+                
+                // If part already has an accepted bid, don't count its pending bids
+                if (hasAcceptedBid) {
+                    return sum;
+                }
+                
+                // Count pending bids only for parts without accepted bids
+                const pendingBidsCount = bids.filter((bid: any) => bid.status === "pending").length;
+                return sum + pendingBidsCount;
+            },
             0
         );
 
@@ -426,11 +437,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                                     {orderMetrics.totalParts} Parts Requested
                                 </Badge>
 
-                                <Badge
-                                    variant="secondary"
-                                    className="bg-purple-100 text-purple-800">
-                                    {orderMetrics.totalPendingBids} Pending Bids
-                                </Badge>
+                                {/* Only show pending bids badge if there are actually pending bids to review */}
+                                {orderMetrics.totalPendingBids > 0 && (
+                                    <Badge
+                                        variant="secondary"
+                                        className="bg-purple-100 text-purple-800">
+                                        {orderMetrics.totalPendingBids} Pending Bids
+                                    </Badge>
+                                )}
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
