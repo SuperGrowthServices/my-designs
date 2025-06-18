@@ -1,146 +1,171 @@
+"use client"
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Package, DollarSign, Clock } from 'lucide-react';
+import type React from "react"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { useToast } from "@/hooks/use-toast"
+import { Package, DollarSign, Clock } from "lucide-react"
+
+interface Vehicle {
+  make: string
+  model: string
+  year: number
+}
+
+interface Order {
+  id: string
+  is_paid: boolean
+}
+
+interface Part {
+  id: string
+  part_name: string
+  part_number: string | null
+  quantity: number
+  shipping_status: string
+  order_id: string
+  vehicles: Vehicle[] // Supabase returns this as an array
+  orders: Order[] // Supabase returns this as an array
+}
+
+interface BidWithParts {
+  id: string
+  price: number
+  part_id: string
+  parts: Part[] // Supabase returns this as an array even with !inner
+}
 
 interface ReadyToShipItem {
-  id: string;
-  part_name: string;
-  part_number: string;
-  quantity: number;
-  price: number;
-  order_id: string;
-  part_id: string;
-  bid_id: string;
-  vehicle: {
-    make: string;
-    model: string;
-    year: number;
-  };
-  shipping_status: string;
+  id: string
+  part_name: string
+  part_number: string
+  quantity: number
+  price: number
+  order_id: string
+  part_id: string
+  bid_id: string
+  vehicle: Vehicle
+  shipping_status: string
 }
 
 export const ReadyToShip: React.FC = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [items, setItems] = useState<ReadyToShipItem[]>([]);
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [items, setItems] = useState<ReadyToShipItem[]>([])
   const [stats, setStats] = useState({
     itemsToShip: 0,
     totalValue: 0,
-    ordersWaiting: 0
-  });
-  const [loading, setLoading] = useState(true);
+    ordersWaiting: 0,
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (user) {
-      fetchReadyToShipItems();
+      fetchReadyToShipItems()
     }
-  }, [user]);
+  }, [user])
 
   const fetchReadyToShipItems = async () => {
-    if (!user) return;
+    if (!user) return
 
     try {
-
       const { data: bidsData, error: bidsError } = await supabase
-  .from('bids')
-  .select(`
-    id,
-    price,
-    part_id,
-    parts (
-      id,
-      part_name,
-      part_number,
-      quantity,
-      shipping_status,
-      order_id,
-      vehicle:vehicles (
-        make,
-        model,
-        year
-      ),
-      order:orders!inner (
+        .from("bids")
+        .select(`
         id,
-        is_paid
-      )
-    )
-  `)
-  .eq('vendor_id', user.id)
-  .eq('status', 'accepted')
-  .not('parts.order.is_paid', 'is', false); // Ensure order is paid
+        price,
+        part_id,
+        parts!inner (
+          id,
+          part_name,
+          part_number,
+          quantity,
+          shipping_status,
+          order_id,
+          vehicles (
+            make,
+            model,
+            year
+          ),
+          orders!inner (
+            id,
+            is_paid
+          )
+        )
+      `)
+        .eq("vendor_id", user.id)
+        .eq("status", "accepted")
+        .eq("parts.orders.is_paid", true)
+        .eq("parts.shipping_status", "pending_pickup")
 
-      if (bidsError) throw bidsError;
-        
-      const readyItems: ReadyToShipItem[] = [];
-      
+      if (bidsError) throw bidsError
+
+      const readyItems: ReadyToShipItem[] = []
+
       if (bidsData) {
-        for (const bid of bidsData) {
-          // Change this line in your code:
-if (bid.parts && bid.parts.order.is_paid && bid.parts.shipping_status === 'pending_pickup') {
-            
+        for (const bid of bidsData as any[]) {
+          // Revert back to original working logic
+          if (bid.parts && bid.parts.orders?.is_paid && bid.parts.shipping_status === "pending_pickup") {
             readyItems.push({
               id: `${bid.id}-${bid.parts.id}`,
               part_name: bid.parts.part_name,
-              part_number: bid.parts.part_number || 'N/A',
+              part_number: bid.parts.part_number || "N/A",
               quantity: bid.parts.quantity,
               price: bid.price,
               order_id: bid.parts.order_id,
               part_id: bid.parts.id,
               bid_id: bid.id,
-              vehicle: bid.parts.vehicle,
-              shipping_status: bid.parts.shipping_status
-            });
+              vehicle: bid.parts.vehicles,
+              shipping_status: bid.parts.shipping_status,
+            })
           }
         }
       }
 
-      setItems(readyItems);
+      setItems(readyItems)
 
-      const uniqueOrders = new Set(readyItems.map(item => item.order_id));
+      const uniqueOrders = new Set(readyItems.map((item) => item.order_id))
       setStats({
         itemsToShip: readyItems.length,
         totalValue: readyItems.reduce((sum, item) => sum + Number(item.price), 0),
-        ordersWaiting: uniqueOrders.size
-      });
-
+        ordersWaiting: uniqueOrders.size,
+      })
     } catch (error) {
-      console.error('Error fetching ready to ship items:', error);
+      console.error("Error fetching ready to ship items:", error)
       toast({
         title: "Error loading items",
         description: "Unable to fetch ready to ship items. Please try again.",
-        variant: "destructive"
-      });
+        variant: "destructive",
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const statCards = [
     {
-      title: 'Items to Ship',
+      title: "Items to Ship",
       value: stats.itemsToShip,
       icon: Package,
-      color: 'text-blue-600'
+      color: "text-blue-600",
     },
     {
-      title: 'Total Value (AED)',
+      title: "Total Value (AED)",
       value: stats.totalValue.toLocaleString(),
       icon: DollarSign,
-      color: 'text-green-600'
+      color: "text-green-600",
     },
     {
-      title: 'Orders Waiting',
+      title: "Orders Waiting",
       value: stats.ordersWaiting,
       icon: Clock,
-      color: 'text-orange-600'
-    }
-  ];
+      color: "text-orange-600",
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -151,7 +176,7 @@ if (bid.parts && bid.parts.order.is_paid && bid.parts.shipping_status === 'pendi
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {statCards.map((stat, index) => {
-          const Icon = stat.icon;
+          const Icon = stat.icon
           return (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -162,7 +187,7 @@ if (bid.parts && bid.parts.order.is_paid && bid.parts.shipping_status === 'pendi
                 <div className="text-2xl font-bold">{stat.value}</div>
               </CardContent>
             </Card>
-          );
+          )
         })}
       </div>
 
@@ -204,18 +229,12 @@ if (bid.parts && bid.parts.order.is_paid && bid.parts.shipping_status === 'pendi
                       <div className="text-sm">
                         {item.vehicle.make} {item.vehicle.model}
                       </div>
-                      <div className="text-xs text-gray-600">
-                        {item.vehicle.year}
-                      </div>
+                      <div className="text-xs text-gray-600">{item.vehicle.year}</div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs text-gray-500 font-mono">
-                        #{item.order_id.slice(0, 8)}
-                      </div>
+                      <div className="text-xs text-gray-500 font-mono">#{item.order_id.slice(0, 8)}</div>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {item.price.toLocaleString()}
-                    </TableCell>
+                    <TableCell className="text-right font-medium">{item.price.toLocaleString()}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                         Ready for Pickup
@@ -229,5 +248,5 @@ if (bid.parts && bid.parts.order.is_paid && bid.parts.shipping_status === 'pendi
         </CardContent>
       </Card>
     </div>
-  );
-};
+  )
+}

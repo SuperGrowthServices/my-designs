@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -506,7 +508,7 @@ export const QuoteHistory: React.FC = () => {
 
       {/* Stats Cards */}
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -522,10 +524,12 @@ export const QuoteHistory: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Awaiting Quotes</p>
-                <p className="text-2xl font-bold">{stats.awaitingQuotes}</p>
+                <p className="text-sm text-gray-600">Awaiting Action</p>
+                <p className="text-2xl font-bold">
+                  {stats.awaitingQuotes + stats.quoteReceived + stats.paymentPending}
+                </p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
+              <Clock className="w-8 h-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -533,30 +537,8 @@ export const QuoteHistory: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Quote Received</p>
-                <p className="text-2xl font-bold">{stats.quoteReceived}</p>
-              </div>
-              <MessageCircle className="w-8 h-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Payment Pending</p>
-                <p className="text-2xl font-bold">{stats.paymentPending}</p>
-              </div>
-              <CreditCard className="w-8 h-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">In Transit</p>
-                <p className="text-2xl font-bold">{stats.processing}</p>
+                <p className="text-sm text-gray-600">In Progress</p>
+                <p className="text-2xl font-bold">{stats.processing + stats.partiallyDelivered}</p>
               </div>
               <RefreshCw className="w-8 h-8 text-purple-600" />
             </div>
@@ -566,54 +548,10 @@ export const QuoteHistory: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Delivered</p>
-                <p className="text-2xl font-bold">{stats.partiallyDelivered}</p>
-              </div>
-              <Package className="w-8 h-8 text-indigo-600" />
-            </div>
-          </CardContent>
-        </Card>
-        {/* <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Delivered</p>
-          <p className="text-2xl font-bold">{stats.delivered}</p>
-        </div>
-        <Truck className="w-8 h-8 text-green-500" />
-      </div>
-    </CardContent>
-  </Card> */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm text-gray-600">Completed</p>
                 <p className="text-2xl font-bold">{stats.completed}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Cancelled</p>
-                <p className="text-2xl font-bold">{stats.cancelled}</p>
-              </div>
-              <XCircle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Refunded</p>
-                <p className="text-2xl font-bold">{stats.refunded}</p>
-              </div>
-              <RotateCcw className="w-8 h-8 text-gray-600" />
             </div>
           </CardContent>
         </Card>
