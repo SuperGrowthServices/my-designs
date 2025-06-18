@@ -57,7 +57,7 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const validateDeliveryInfo = () => {
-    const requiredFields = ['deliveryAddress', 'location', 'address', 'contactNumber'];
+    const requiredFields = ['deliveryAddress', 'location', 'contactNumber'];
     const missingFields = requiredFields.filter(field => !deliveryInfo[field as keyof DeliveryInfo].trim());
     
     if (missingFields.length > 0) {
@@ -82,86 +82,94 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const handlePayment = async () => {
-    if (!validateDeliveryInfo()) {
-      return;
-    }
+  if (!validateDeliveryInfo()) {
+    return;
+  }
 
-    if (!selectedDeliveryOption) {
+  if (!selectedDeliveryOption) {
+    toast({
+      title: "Missing delivery option",
+      description: "Please select a delivery option.",
+      variant: "destructive"
+    });
+    return;
+  }
+
+  setProcessing(true);
+  console.log('Starting payment process for order:', orderId);
+
+  try {
+    const totals = calculateTotals();
+    
+    // Format phone number with +971 prefix
+    const formattedContactNumber = deliveryInfo.contactNumber.startsWith('+971') 
+      ? deliveryInfo.contactNumber 
+      : `+971${deliveryInfo.contactNumber.replace(/^0/, '')}`;
+
+    // Combine ALL delivery information into the delivery_address field
+    // Since this is the only delivery-related column in your invoices table
+    const deliveryAddress = [
+      `Delivery Address: ${deliveryInfo.deliveryAddress}`,
+      `Location: ${deliveryInfo.location}`,
+      `Contact: ${formattedContactNumber}`,
+      deliveryInfo.specialInstructions && `Instructions: ${deliveryInfo.specialInstructions}`,
+      deliveryInfo.googleMapsUrl && `Maps: ${deliveryInfo.googleMapsUrl}`
+    ].filter(Boolean).join('\n');
+
+    const { data: invoiceData, error: invoiceError } = await supabase
+      .from('invoices')
+      .insert({
+        user_id: user!.id,
+        order_id: orderId,
+        delivery_address: deliveryAddress, // All delivery info goes here
+        delivery_option_id: selectedDeliveryOption,
+        subtotal: totals.subtotal,
+        vat_amount: totals.vatAmount,
+        service_fee: totals.serviceFee,
+        delivery_fee: totals.deliveryFee,
+        total_amount: totals.total,
+        payment_status: 'unpaid'
+        // Removed delivery_instructions and google_maps_url as they don't exist
+        // in your schema
+      })
+      .select()
+      .single();
+
+    if (invoiceError) throw invoiceError;
+
+    const checkoutPayload = {
+      invoice_id: invoiceData.id,
+      amount: Math.round(totals.total * 100),
+      currency: 'aed'
+    };
+
+    const { data: stripeData, error: stripeError } = await supabase.functions.invoke('create-checkout', {
+      body: checkoutPayload
+    });
+
+    if (stripeError) throw stripeError;
+
+    if (stripeData?.url) {
       toast({
-        title: "Missing delivery option",
-        description: "Please select a delivery option.",
-        variant: "destructive"
+        title: "Payment session created",
+        description: "Redirecting to Stripe for secure payment...",
       });
-      return;
+
+      attemptRedirect(stripeData.url);
+    } else {
+      throw new Error('No checkout URL received from Stripe');
     }
-
-    setProcessing(true);
-    console.log('Starting payment process for order:', orderId);
-
-    try {
-      const totals = calculateTotals();
-      
-      // Format the phone number with country code if not already present
-      const formattedContactNumber = deliveryInfo.contactNumber.startsWith('971') 
-        ? deliveryInfo.contactNumber 
-        : `971${deliveryInfo.contactNumber}`;
-      
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert({
-          user_id: user!.id,
-          order_id: orderId,
-          delivery_address: `${deliveryInfo.deliveryAddress}\nLocation: ${deliveryInfo.location}\nContact: ${deliveryInfo.contactNumber}${deliveryInfo.specialInstructions ? `\nInstructions: ${deliveryInfo.specialInstructions}` : ''}${deliveryInfo.googleMapsUrl ? `\nMaps: ${deliveryInfo.googleMapsUrl}` : ''}`,
-          delivery_location: deliveryInfo.location,
-          delivery_contact: formattedContactNumber,
-          delivery_instructions: deliveryInfo.specialInstructions,
-          google_maps_url: deliveryInfo.googleMapsUrl,
-          delivery_option_id: selectedDeliveryOption,
-          subtotal: totals.subtotal,
-          vat_amount: totals.vatAmount,
-          service_fee: totals.serviceFee,
-          delivery_fee: totals.deliveryFee,
-          total_amount: totals.total,
-          payment_status: 'unpaid'
-        })
-        .select()
-        .single();
-
-      if (invoiceError) throw invoiceError;
-
-      const checkoutPayload = {
-        invoice_id: invoiceData.id,
-        amount: Math.round(totals.total * 100),
-        currency: 'aed'
-      };
-
-      const { data: stripeData, error: stripeError } = await supabase.functions.invoke('create-checkout', {
-        body: checkoutPayload
-      });
-
-      if (stripeError) throw stripeError;
-
-      if (stripeData?.url) {
-        toast({
-          title: "Payment session created",
-          description: "Redirecting to Stripe for secure payment...",
-        });
-
-        attemptRedirect(stripeData.url);
-      } else {
-        throw new Error('No checkout URL received from Stripe');
-      }
-    } catch (error: any) {
-      console.error('Error processing payment:', error);
-      toast({
-        title: "Payment error",
-        description: error.message || "Unable to process payment. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setProcessing(false);
-    }
-  };
+  } catch (error: any) {
+    console.error('Error processing payment:', error);
+    toast({
+      title: "Payment error",
+      description: error.message || "Unable to process payment. Please try again.",
+      variant: "destructive"
+    });
+  } finally {
+    setProcessing(false);
+  }
+};
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading checkout...</div>;
