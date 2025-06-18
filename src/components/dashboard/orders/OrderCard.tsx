@@ -298,7 +298,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
             const { error: partError } = await supabase
                 .from("parts")
-                .update({ is_accepted: true })
+                .update({ is_accepted: true ,shipping_status: 'pending_pickup', // Critical update
+})
                 .eq("id", partId);
 
             if (partError) throw partError;
