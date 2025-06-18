@@ -255,74 +255,92 @@ export const VendorHome: React.FC = () => {
 
     // Add or modify the useMemo for processing vehicles
     const { newVehicles, quotedVehicles, acceptedVehicles } = useMemo(() => {
-        const allVehicles: DisplayVehicle[] = (orders as OrderWithParts[]).flatMap((order) =>
-            // Assuming each order has a vehicle property that contains vehicle information
-            order.parts.reduce((acc: DisplayVehicle[], part) => {
-                if (!part.vehicle) return acc;
+    const allVehicles: DisplayVehicle[] = (orders as OrderWithParts[]).flatMap((order) =>
+        order.parts.reduce((acc: DisplayVehicle[], part) => {
+            if (!part.vehicle) return acc;
 
-                // Find existing vehicle in accumulator
-                const existingVehicle = acc.find((v) => v.id === part.vehicle.id);
+            // Find existing vehicle in accumulator
+            const existingVehicle = acc.find((v) => v.id === part.vehicle.id);
 
-                if (existingVehicle) {
-                    // Add part to existing vehicle
-                    existingVehicle.parts.push({
-                        id: part.id,
-                        partName: part.part_name,
-                        partNumber: part.part_number || '',
-                        quantity: part.quantity,
-                        myQuote: part.existing_bid ? {
-                            id: part.existing_bid.id,
-                            price: part.existing_bid.price,
-                            condition: 'Used - Good', // You'll need to add this to your bid type
-                            warranty: '7 Days', // You'll need to add this to your bid type
-                            notes: part.existing_bid.notes || '',
-                            isAccepted: part.existing_bid.status === 'accepted'
-                        } : undefined
-                    });
-                    return acc;
-                }
-
-                // Create new vehicle entry
-                acc.push({
-                    id: part.vehicle.id,
-                    vehicleName: `${part.vehicle.year} ${part.vehicle.make} ${part.vehicle.model}`,
-                    vinNumber: part.vehicle.vin ?? '', // Use nullish coalescing
-                    orderId: order.id,
-                    createdAt: order.created_at,
-                    parts: [{
-                        id: part.id,
-                        partName: part.part_name,
-                        partNumber: part.part_number || '',
-                        quantity: part.quantity,
-                        myQuote: part.existing_bid ? {
-                            id: part.existing_bid.id,
-                            price: part.existing_bid.price,
-                            condition: 'Used - Good',
-                            warranty: '7 Days',
-                            notes: part.existing_bid.notes || '',
-                            imageUrl: part.existing_bid.image_url,
-                            isAccepted: part.existing_bid.status === 'accepted'
-                        } : undefined
-                    }],
-                    status: part.existing_bid ?
-                        (part.existing_bid.status === 'accepted' ? 'accepted' : 'quoted')
-                        : 'new'
+            if (existingVehicle) {
+                // Add part to existing vehicle
+                existingVehicle.parts.push({
+                    id: part.id,
+                    partName: part.part_name,
+                    partNumber: part.part_number || '',
+                    quantity: part.quantity,
+                    myQuote: part.existing_bid ? {
+                        id: part.existing_bid.id,
+                        price: part.existing_bid.price,
+                        condition: 'Used - Good',
+                        warranty: '7 Days',
+                        notes: part.existing_bid.notes || '',
+                        imageUrl: part.existing_bid.image_url,
+                        isAccepted: part.existing_bid.status === 'accepted'
+                    } : undefined
                 });
                 return acc;
-            }, [])
-        );
+            }
 
-        // Filter vehicles for each category
-        const newVehicles = allVehicles.filter((v) => v.parts.some((p) => !p.myQuote));
-        const quotedVehicles = allVehicles.filter(v =>
-            v.parts.some(p => p.myQuote && !p.myQuote.isAccepted)
-        );
-        const acceptedVehicles = allVehicles.filter(v =>
-            v.parts.some(p => p.myQuote?.isAccepted)
-        );
+            // Create new vehicle entry
+            acc.push({
+                id: part.vehicle.id,
+                vehicleName: `${part.vehicle.year} ${part.vehicle.make} ${part.vehicle.model}`,
+                vinNumber: part.vehicle.vin ?? '',
+                orderId: order.id,
+                createdAt: order.created_at,
+                parts: [{
+                    id: part.id,
+                    partName: part.part_name,
+                    partNumber: part.part_number || '',
+                    quantity: part.quantity,
+                    myQuote: part.existing_bid ? {
+                        id: part.existing_bid.id,
+                        price: part.existing_bid.price,
+                        condition: 'Used - Good',
+                        warranty: '7 Days',
+                        notes: part.existing_bid.notes || '',
+                        imageUrl: part.existing_bid.image_url,
+                        isAccepted: part.existing_bid.status === 'accepted'
+                    } : undefined
+                }],
+                status: part.existing_bid ?
+                    (part.existing_bid.status === 'accepted' ? 'accepted' : 'quoted')
+                    : 'new'
+            });
+            return acc;
+        }, [])
+    );
 
-        return { newVehicles, quotedVehicles, acceptedVehicles };
-    }, [orders]);
+    // Create separate vehicle instances for different categories
+    // This allows the same vehicle to appear in multiple tabs with different parts
+    
+    // New Requests: Show vehicles with parts that have no quotes yet
+    const newVehicles = allVehicles
+        .map(vehicle => ({
+            ...vehicle,
+            parts: vehicle.parts.filter(p => !p.myQuote)
+        }))
+        .filter(vehicle => vehicle.parts.length > 0);
+
+    // My Quotes: Show vehicles with parts that are quoted but NOT accepted
+    const quotedVehicles = allVehicles
+        .map(vehicle => ({
+            ...vehicle,
+            parts: vehicle.parts.filter(p => p.myQuote && !p.myQuote.isAccepted)
+        }))
+        .filter(vehicle => vehicle.parts.length > 0);
+
+    // Accepted Quotes: Show vehicles with parts that ARE accepted
+    const acceptedVehicles = allVehicles
+        .map(vehicle => ({
+            ...vehicle,
+            parts: vehicle.parts.filter(p => p.myQuote?.isAccepted)
+        }))
+        .filter(vehicle => vehicle.parts.length > 0);
+
+    return { newVehicles, quotedVehicles, acceptedVehicles };
+}, [orders]);
 
     // Update the stats calculation
     const summaryStats = useMemo(() => ({
