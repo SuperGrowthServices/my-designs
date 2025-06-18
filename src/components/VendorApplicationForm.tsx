@@ -153,7 +153,7 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
         .from('user_profiles')
         .update({
           business_name: formData.business_name,
-          whatsapp_number: formData.whatsapp_number,
+          whatsapp_number: `971${formData.whatsapp_number}`, // Add 971 prefix here
           vendor_tags: selectedTags,
           location: formData.location,
           bank_name: formData.bank_name,
@@ -238,13 +238,24 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="whatsapp_number">WhatsApp Number *</Label>
-                <Input
-                  id="whatsapp_number"
-                  value={formData.whatsapp_number}
-                  onChange={(e) => setFormData(prev => ({ ...prev, whatsapp_number: e.target.value }))}
-                  placeholder="+9715XXXXXXX"
-                  required
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    +971
+                  </span>
+                  <Input
+                    id="whatsapp_number"
+                    value={formData.whatsapp_number}
+                    onChange={(e) => {
+                      // Remove any non-numeric characters and the prefix if entered
+                      const cleaned = e.target.value.replace(/\D/g, '').replace(/^971/, '');
+                      setFormData(prev => ({ ...prev, whatsapp_number: cleaned }));
+                    }}
+                    className="pl-14"
+                    placeholder="50 123 4567"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500">Enter your number without the country code</p>
               </div>
 
               <div className="space-y-2 md:col-span-2">
