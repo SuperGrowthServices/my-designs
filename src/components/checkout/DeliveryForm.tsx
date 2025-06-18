@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
-import { supabase } from '@/lib/supabase'; // Make sure you have this configured
+import { Pencil, MapPin, Phone, FileText, Map } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface DeliveryOption {
   id: string;
@@ -14,10 +15,18 @@ interface DeliveryOption {
   estimated_days: number;
 }
 
+interface DeliveryInfo {
+  deliveryAddress: string;
+  location: string;
+  contactNumber: string;
+  specialInstructions: string;
+  googleMapsUrl: string;
+}
+
 interface DeliveryFormProps {
   userId: string;
-  deliveryAddress: string;
-  onDeliveryAddressChange: (address: string) => void;
+  deliveryInfo: DeliveryInfo;
+  onDeliveryInfoChange: (info: DeliveryInfo) => void;
   selectedDeliveryOption: string;
   onDeliveryOptionChange: (option: string) => void;
   deliveryOptions: DeliveryOption[];
@@ -25,8 +34,8 @@ interface DeliveryFormProps {
 
 export const DeliveryForm: React.FC<DeliveryFormProps> = ({
   userId,
-  deliveryAddress,
-  onDeliveryAddressChange,
+  deliveryInfo,
+  onDeliveryInfoChange,
   selectedDeliveryOption,
   onDeliveryOptionChange,
   deliveryOptions
@@ -50,9 +59,16 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
         if (error) throw error;
 
         setUserProfile(data);
-        // Set the initial delivery address from user profile if not already set
-        if (data?.delivery_address && !deliveryAddress) {
-          onDeliveryAddressChange(data.delivery_address);
+        
+        // Set initial delivery info from user profile if not already set
+        if (data && !deliveryInfo.deliveryAddress) {
+          onDeliveryInfoChange({
+            deliveryAddress: data.delivery_address || '',
+            location: data.location || '',
+            contactNumber: data.delivery_phone || '',
+            specialInstructions: data.delivery_instructions || '',
+            googleMapsUrl: data.google_maps_url || ''
+          });
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -64,20 +80,32 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
     fetchUserProfile();
   }, [userId]);
 
+  const handleInputChange = (field: keyof DeliveryInfo, value: string) => {
+    onDeliveryInfoChange({
+      ...deliveryInfo,
+      [field]: value
+    });
+  };
+
   const handleSaveAddress = async () => {
-    if (!userId || !deliveryAddress) return;
+    if (!userId) return;
 
     try {
       const { error } = await supabase
         .from('user_profiles')
         .update({ 
-          delivery_address: deliveryAddress 
+          delivery_address: deliveryInfo.deliveryAddress,
+          location: deliveryInfo.location,
+          delivery_phone: deliveryInfo.contactNumber,
+          delivery_instructions: deliveryInfo.specialInstructions,
+          google_maps_url: deliveryInfo.googleMapsUrl
         })
         .eq('id', userId);
 
       if (error) throw error;
 
       setIsEditing(false);
+      
       // Refresh the user profile
       const { data } = await supabase
         .from('user_profiles')
@@ -108,10 +136,10 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
         <CardTitle>Delivery Information</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Delivery Address */}
+        {/* Delivery Address Section */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <Label>Delivery Address</Label>
+            <Label className="text-lg font-semibold">Delivery Details</Label>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -124,36 +152,153 @@ export const DeliveryForm: React.FC<DeliveryFormProps> = ({
           </div>
 
           {!isEditing ? (
-            <div className="p-4 border rounded-md bg-gray-50">
+            <div className="p-4 border rounded-md bg-gray-50 space-y-3">
               {userProfile?.delivery_address ? (
-                <p>{userProfile.delivery_address}</p>
+                <>
+                  <div className="flex items-start gap-2">
+                    <FileText className="w-4 h-4 mt-1 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-sm text-gray-700">Delivery Address</p>
+                      <p className="text-sm">{userProfile.delivery_address}</p>
+                    </div>
+                  </div>
+                  
+                  {userProfile.location && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 mt-1 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-sm text-gray-700">Location</p>
+                        <p className="text-sm">{userProfile.location}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {userProfile.delivery_phone && (
+                    <div className="flex items-start gap-2">
+                      <Phone className="w-4 h-4 mt-1 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-sm text-gray-700">Contact Number</p>
+                        <p className="text-sm">{userProfile.delivery_phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {userProfile.delivery_instructions && (
+                    <div className="flex items-start gap-2">
+                      <FileText className="w-4 h-4 mt-1 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-sm text-gray-700">Special Instructions</p>
+                        <p className="text-sm">{userProfile.delivery_instructions}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {userProfile.google_maps_url && (
+                    <div className="flex items-start gap-2">
+                      <Map className="w-4 h-4 mt-1 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-sm text-gray-700">Google Maps</p>
+                        <a 
+                          href={userProfile.google_maps_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          View Location
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
-                <p className="text-gray-500">No delivery address set</p>
-              )}
-              {userProfile?.delivery_phone && (
-                <p className="mt-2 text-sm text-gray-600">
-                  <span className="font-medium">Phone:</span> {userProfile.delivery_phone}
-                </p>
-              )}
-              {userProfile?.delivery_instructions && (
-                <p className="mt-1 text-sm text-gray-600">
-                  <span className="font-medium">Instructions:</span> {userProfile.delivery_instructions}
-                </p>
+                <p className="text-gray-500">No delivery information set</p>
               )}
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Delivery Address */}
               <div className="space-y-2">
+                <Label htmlFor="deliveryAddress" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Delivery Address *
+                </Label>
                 <Textarea
-                  value={deliveryAddress}
-                  onChange={(e) => onDeliveryAddressChange(e.target.value)}
-                  placeholder="Enter your complete delivery address including building number, street, area, and city"
-                  className="min-h-[100px]"
+                  id="deliveryAddress"
+                  value={deliveryInfo.deliveryAddress}
+                  onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
+                  placeholder="Enter the complete delivery address"
+                  className="min-h-[80px]"
                   required
                 />
               </div>
-              <Button onClick={handleSaveAddress} disabled={!deliveryAddress}>
-                Save Address
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label htmlFor="location" className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Location *
+                </Label>
+                <Input
+                  id="location"
+                  value={deliveryInfo.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  placeholder="e.g., Downtown Dubai, Business Bay"
+                  required
+                />
+              </div>
+
+              {/* Contact Number */}
+              <div className="space-y-2">
+                <Label htmlFor="contactNumber" className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Delivery Contact Number *
+                </Label>
+                <Input
+                  id="contactNumber"
+                  type="tel"
+                  value={deliveryInfo.contactNumber}
+                  onChange={(e) => handleInputChange('contactNumber', e.target.value)}
+                  placeholder="+971 50 123 4567"
+                  required
+                />
+              </div>
+
+              {/* Special Instructions */}
+              <div className="space-y-2">
+                <Label htmlFor="specialInstructions" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Special Instructions
+                </Label>
+                <Textarea
+                  id="specialInstructions"
+                  value={deliveryInfo.specialInstructions}
+                  onChange={(e) => handleInputChange('specialInstructions', e.target.value)}
+                  placeholder="Any specific delivery instructions (optional)"
+                  className="min-h-[60px]"
+                />
+              </div>
+
+              {/* Google Maps URL */}
+              <div className="space-y-2">
+                <Label htmlFor="googleMapsUrl" className="flex items-center gap-2">
+                  <Map className="w-4 h-4" />
+                  Google Maps URL
+                </Label>
+                <Input
+                  id="googleMapsUrl"
+                  type="url"
+                  value={deliveryInfo.googleMapsUrl}
+                  onChange={(e) => handleInputChange('googleMapsUrl', e.target.value)}
+                  placeholder="https://maps.google.com/... (optional)"
+                />
+              </div>
+
+              <Button 
+                onClick={handleSaveAddress} 
+                disabled={!deliveryInfo.deliveryAddress || !deliveryInfo.location || !deliveryInfo.contactNumber}
+                className="w-full"
+              >
+                Save Delivery Information
               </Button>
             </div>
           )}

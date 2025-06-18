@@ -11,6 +11,14 @@ import { PaymentRedirectAlert } from './PaymentRedirectAlert';
 import { useCheckoutData } from '@/hooks/useCheckoutData';
 import { usePaymentRedirect } from '@/hooks/usePaymentRedirect';
 
+interface DeliveryInfo {
+  deliveryAddress: string;
+  location: string;
+  contactNumber: string;
+  specialInstructions: string;
+  googleMapsUrl: string;
+}
+
 export const CheckoutPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const { user } = useAuth();
@@ -26,7 +34,13 @@ export const CheckoutPage: React.FC = () => {
   } = usePaymentRedirect();
 
   const [selectedDeliveryOption, setSelectedDeliveryOption] = useState<string>('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
+    deliveryAddress: '',
+    location: '',
+    contactNumber: '',
+    specialInstructions: '',
+    googleMapsUrl: ''
+  });
   const [processing, setProcessing] = useState(false);
 
   const calculateTotals = () => {
@@ -42,13 +56,33 @@ export const CheckoutPage: React.FC = () => {
     return { subtotal, vatAmount, serviceFee, deliveryFee, total };
   };
 
-  const handlePayment = async () => {
-    if (!deliveryAddress.trim()) {
+  const validateDeliveryInfo = () => {
+    const requiredFields = ['deliveryAddress', 'location', 'address', 'contactNumber'];
+    const missingFields = requiredFields.filter(field => !deliveryInfo[field as keyof DeliveryInfo].trim());
+    
+    if (missingFields.length > 0) {
+      const fieldNames = missingFields.map(field => {
+        switch (field) {
+          case 'deliveryAddress': return 'Delivery Address';
+          case 'location': return 'Location';
+          case 'address': return 'Address';
+          case 'contactNumber': return 'Contact Number';
+          default: return field;
+        }
+      });
+      
       toast({
-        title: "Missing delivery address",
-        description: "Please enter your delivery address.",
+        title: "Missing delivery information",
+        description: `Please fill in: ${fieldNames.join(', ')}`,
         variant: "destructive"
       });
+      return false;
+    }
+    return true;
+  };
+
+  const handlePayment = async () => {
+    if (!validateDeliveryInfo()) {
       return;
     }
 
@@ -67,12 +101,19 @@ export const CheckoutPage: React.FC = () => {
     try {
       const totals = calculateTotals();
       
+      // Create a formatted delivery address string for database storage
+      const formattedDeliveryAddress = `${deliveryInfo.deliveryAddress}\nLocation: ${deliveryInfo.location}\nContact: ${deliveryInfo.contactNumber}${deliveryInfo.specialInstructions ? `\nInstructions: ${deliveryInfo.specialInstructions}` : ''}${deliveryInfo.googleMapsUrl ? `\nMaps: ${deliveryInfo.googleMapsUrl}` : ''}`;
+      
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
           user_id: user!.id,
           order_id: orderId,
-          delivery_address: deliveryAddress,
+          delivery_address: formattedDeliveryAddress,
+          delivery_location: deliveryInfo.location,
+          delivery_contact: deliveryInfo.contactNumber,
+          delivery_instructions: deliveryInfo.specialInstructions,
+          google_maps_url: deliveryInfo.googleMapsUrl,
           delivery_option_id: selectedDeliveryOption,
           subtotal: totals.subtotal,
           vat_amount: totals.vatAmount,
@@ -167,9 +208,9 @@ export const CheckoutPage: React.FC = () => {
           <div className="space-y-6">
             <OrderSummary acceptedBids={acceptedBids} />
             <DeliveryForm 
-              userId={user?.id} // Pass the user ID to DeliveryForm
-              deliveryAddress={deliveryAddress}
-              onDeliveryAddressChange={setDeliveryAddress}
+              userId={user?.id}
+              deliveryInfo={deliveryInfo}
+              onDeliveryInfoChange={setDeliveryInfo}
               selectedDeliveryOption={selectedDeliveryOption}
               onDeliveryOptionChange={setSelectedDeliveryOption}
               deliveryOptions={deliveryOptions}
@@ -183,7 +224,7 @@ export const CheckoutPage: React.FC = () => {
               processing={processing}
               redirectAttempted={redirectAttempted}
               redirectStatus={redirectStatus}
-              deliveryAddress={deliveryAddress}
+              deliveryAddress={`${deliveryInfo.deliveryAddress} ${deliveryInfo.location}`.trim()}
               selectedDeliveryOption={selectedDeliveryOption}
               deliveryOptions={deliveryOptions}
               onPayment={handlePayment}
