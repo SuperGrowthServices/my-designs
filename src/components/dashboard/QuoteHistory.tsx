@@ -852,10 +852,6 @@ export const QuoteHistory: React.FC = () => {
                                       <span>
                                         <strong>Warranty:</strong> {part.winning_bid.warranty}
                                       </span>
-                                      <span>
-                                        <strong>Vendor:</strong>{" "}
-                                        {part.winning_bid.vendor.business_name || part.winning_bid.vendor.full_name}
-                                      </span>
                                     </div>
                                     {part.winning_bid.notes && (
                                       <p className="text-sm text-gray-600 mt-2">
