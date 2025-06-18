@@ -99,9 +99,9 @@ export const VendorSettings: React.FC<{
                 full_name: userProfile.full_name || "",
                 business_name: userProfile.business_name || "",
                 location: userProfile.location || "",
-                whatsapp_number: userProfile.whatsapp_number || "",
+                whatsapp_number: (userProfile.whatsapp_number || '').replace(/^971/, ''),
+                delivery_phone: (userProfile.delivery_phone || '').replace(/^971/, ''),
                 delivery_address: userProfile.delivery_address || "",
-                delivery_phone: userProfile.delivery_phone || "",
                 delivery_instructions: userProfile.delivery_instructions || "",
                 google_maps_url: userProfile.google_maps_url || "",
             });
@@ -143,10 +143,14 @@ export const VendorSettings: React.FC<{
                     full_name: profileForm.full_name,
                     business_name: profileForm.business_name,
                     location: profileForm.location,
-                    whatsapp_number: profileForm.whatsapp_number,
+                    whatsapp_number: profileForm.whatsapp_number.startsWith('971')
+                        ? profileForm.whatsapp_number
+                        : `971${profileForm.whatsapp_number}`,
                     vendor_tags: selectedTags,
                     delivery_address: profileForm.delivery_address,
-                    delivery_phone: profileForm.delivery_phone,
+                    delivery_phone: profileForm.delivery_phone.startsWith('971')
+                        ? profileForm.delivery_phone
+                        : `971${profileForm.delivery_phone}`,
                     delivery_instructions: profileForm.delivery_instructions,
                     google_maps_url: profileForm.google_maps_url,
                 })
@@ -398,17 +402,29 @@ export const VendorSettings: React.FC<{
                             <Label htmlFor="whatsapp_number">
                                 WhatsApp Number
                             </Label>
-                            <Input
-                                id="whatsapp_number"
-                                value={profileForm.whatsapp_number}
-                                onChange={(e) =>
-                                    setProfileForm((prev) => ({
-                                        ...prev,
-                                        whatsapp_number: e.target.value,
-                                    }))
-                                }
-                                placeholder="Enter your WhatsApp number"
-                            />
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                                    +971
+                                </span>
+                                <Input
+                                    id="whatsapp_number"
+                                    value={profileForm.whatsapp_number}
+                                    onChange={(e) => {
+                                        const cleaned = e.target.value
+                                            .replace(/\D/g, '')
+                                            .replace(/^971/, '');
+                                        setProfileForm(prev => ({
+                                            ...prev,
+                                            whatsapp_number: cleaned
+                                        }))
+                                    }}
+                                    className="pl-14"
+                                    placeholder="50 123 4567"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                                Enter your number without the country code
+                            </p>
                         </div>
                     </div>
                     <Button
@@ -548,17 +564,29 @@ export const VendorSettings: React.FC<{
                             <Label htmlFor="delivery_phone">
                                 Pickup Contact Number
                             </Label>
-                            <Input
-                                id="delivery_phone"
-                                value={profileForm.delivery_phone}
-                                onChange={(e) =>
-                                    setProfileForm((prev) => ({
-                                        ...prev,
-                                        delivery_phone: e.target.value,
-                                    }))
-                                }
-                                placeholder="Phone number for this location"
-                            />
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                                    +971
+                                </span>
+                                <Input
+                                    id="delivery_phone"
+                                    value={profileForm.delivery_phone}
+                                    onChange={(e) => {
+                                        const cleaned = e.target.value
+                                            .replace(/\D/g, '')
+                                            .replace(/^971/, '');
+                                        setProfileForm(prev => ({
+                                            ...prev,
+                                            delivery_phone: cleaned
+                                        }))
+                                    }}
+                                    className="pl-14"
+                                    placeholder="50 123 4567"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                                Enter your number without the country code
+                            </p>
                         </div>
 
                         <div>
