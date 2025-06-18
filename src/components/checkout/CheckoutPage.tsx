@@ -101,17 +101,19 @@ export const CheckoutPage: React.FC = () => {
     try {
       const totals = calculateTotals();
       
-      // Create a formatted delivery address string for database storage
-      const formattedDeliveryAddress = `${deliveryInfo.deliveryAddress}\nLocation: ${deliveryInfo.location}\nContact: ${deliveryInfo.contactNumber}${deliveryInfo.specialInstructions ? `\nInstructions: ${deliveryInfo.specialInstructions}` : ''}${deliveryInfo.googleMapsUrl ? `\nMaps: ${deliveryInfo.googleMapsUrl}` : ''}`;
+      // Format the phone number with country code if not already present
+      const formattedContactNumber = deliveryInfo.contactNumber.startsWith('971') 
+        ? deliveryInfo.contactNumber 
+        : `971${deliveryInfo.contactNumber}`;
       
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
           user_id: user!.id,
           order_id: orderId,
-          delivery_address: formattedDeliveryAddress,
+          delivery_address: `${deliveryInfo.deliveryAddress}\nLocation: ${deliveryInfo.location}\nContact: ${deliveryInfo.contactNumber}${deliveryInfo.specialInstructions ? `\nInstructions: ${deliveryInfo.specialInstructions}` : ''}${deliveryInfo.googleMapsUrl ? `\nMaps: ${deliveryInfo.googleMapsUrl}` : ''}`,
           delivery_location: deliveryInfo.location,
-          delivery_contact: deliveryInfo.contactNumber,
+          delivery_contact: formattedContactNumber,
           delivery_instructions: deliveryInfo.specialInstructions,
           google_maps_url: deliveryInfo.googleMapsUrl,
           delivery_option_id: selectedDeliveryOption,
