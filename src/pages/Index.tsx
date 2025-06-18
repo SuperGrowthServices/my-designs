@@ -102,6 +102,7 @@ const HeroSection = () => {
             <AuthModal 
                 isOpen={showAuthModal} 
                 onClose={() => setShowAuthModal(false)}
+                showSignup
                 signupType="buyer" // Default to buyer signup for this button
             />
         </section>
@@ -349,60 +350,66 @@ const CTACard: React.FC<CTACardProps> = ({
 );
 
 const DualCTASection = () => {
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [signupType, setSignupType] = useState<'buyer' | 'vendor' | null>(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [authModalConfig, setAuthModalConfig] = useState<{
+        showSignup: boolean;
+        signupType?: 'buyer' | 'vendor';
+    }>({ showSignup: false });
 
-  const handleCTAClick = (type: 'buyer' | 'vendor') => {
-    setSignupType(type);
-    setShowAuthModal(true);
-  };
+    const handleBuyerClick = () => {
+        setAuthModalConfig({ showSignup: true, signupType: 'buyer' });
+        setShowAuthModal(true);
+    };
 
-  return (
-    <section className="bg-white py-12 lg:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-stretch">
-          <CTACard
-            isBuyer={true}
-            icon={<Wrench className="h-10 w-10 text-blue-600" />}
-            title="For Garages & Repair Shops"
-            description={[
-                "Find the parts you need.",
-                "Get quotes fast.",
-                "Pay online.",
-                "Fast delivery."
-            ]}
-            buttonText="Start Buying Parts"
-            subtext="Free to join — No monthly fees"
-            buttonVariant="default"
-            onClick={() => handleCTAClick('buyer')}
-          />
-          <CTACard
-            isBuyer={false}
-            icon={<Store className="h-10 w-10 text-green-600" />}
-            title="For Parts Suppliers"
-            description={[
-                "Get more orders.",
-                "Receive buyer requests daily.",
-                "Sell your stock easily.",
-                "Fast payouts."
-            ]}
-            buttonText="Start Selling Parts"
-            subtext="Low fees — Fast payments"
-            buttonVariant="secondary"
-            onClick={() => handleCTAClick('vendor')}
-          />
-        </div>
-      </div>
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => {
-          setShowAuthModal(false);
-          setSignupType(null);
-        }}
-        signupType={signupType}
-      />
-    </section>
-  );
+    const handleVendorClick = () => {
+        setAuthModalConfig({ showSignup: true, signupType: 'vendor' });
+        setShowAuthModal(true);
+    };
+
+    return (
+        <section className="bg-white py-12 lg:py-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid lg:grid-cols-2 gap-12 items-stretch">
+                    <CTACard
+                        isBuyer={true}
+                        icon={<Wrench className="h-10 w-10 text-blue-600" />}
+                        title="For Garages & Repair Shops"
+                        description={[
+                            "Find the parts you need.",
+                            "Get quotes fast.",
+                            "Pay online.",
+                            "Fast delivery."
+                        ]}
+                        buttonText="Start Buying Parts"
+                        subtext="Free to join — No monthly fees"
+                        buttonVariant="default"
+                        onClick={handleBuyerClick}
+                    />
+                    <CTACard
+                        isBuyer={false}
+                        icon={<Store className="h-10 w-10 text-green-600" />}
+                        title="For Parts Suppliers"
+                        description={[
+                            "Get more orders.",
+                            "Receive buyer requests daily.",
+                            "Sell your stock easily.",
+                            "Fast payouts."
+                        ]}
+                        buttonText="Start Selling Parts"
+                        subtext="Low fees — Fast payments"
+                        buttonVariant="secondary"
+                        onClick={handleVendorClick}
+                    />
+                </div>
+            </div>
+            <AuthModal 
+                isOpen={showAuthModal} 
+                onClose={() => setShowAuthModal(false)}
+                showSignup={authModalConfig.showSignup}
+                signupType={authModalConfig.signupType}
+            />
+        </section>
+    );
 };
 
 const TestimonialCard = ({ text, author }: { text: string, author: string }) => (
@@ -504,10 +511,17 @@ const Footer = () => (
 
 export const HomeDesign = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
-
+    const [authModalConfig, setAuthModalConfig] = useState<{
+        showSignup: boolean;
+        signupType?: 'buyer' | 'vendor';
+    }>({ showSignup: false });
+    const handleLoginClick = () => {
+        setAuthModalConfig({ showSignup: false });
+        setShowAuthModal(true);
+    };
     return (
         <div className="bg-white">
-            <Header onLoginClick={() => setShowAuthModal(true)} />
+            <Header onLoginClick={handleLoginClick} />
             <main>
                 <HeroSection />
                 <StatsSection />
@@ -519,7 +533,11 @@ export const HomeDesign = () => {
                 <PaymentTrustSection />
             </main>
             <Footer />
-            <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-        </div>
+<AuthModal 
+                isOpen={showAuthModal} 
+                onClose={() => setShowAuthModal(false)}
+                showSignup={authModalConfig.showSignup}
+                signupType={authModalConfig.signupType}
+            />        </div>
     );
 };

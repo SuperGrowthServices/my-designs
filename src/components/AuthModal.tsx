@@ -25,16 +25,27 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   signupType?: 'buyer' | 'vendor';
+  showSignup: boolean;
+
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, signupType }) => {
-  const [isSignUp, setIsSignUp] = useState(signupType ? true : false);
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose,showSignup, signupType  // Default to false
+}) => {
+  const [isSignUp, setIsSignUp] = useState(showSignup);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [signupEmail, setSignupEmail] = useState('');
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+
+   React.useEffect(() => {
+    if (!isOpen) {
+      setIsSignUp(showSignup);
+      resetForm();
+    }
+  }, [isOpen, showSignup]);
 
   // Expanded form data for vendor fields
   const [formData, setFormData] = useState({
