@@ -196,6 +196,14 @@ const BidReviewModal = ({
     );
 };
 
+// First, add a helper function to check if all parts have accepted bids
+const allPartsHaveAcceptedBids = (parts: any[]) => {
+    return parts.every((part) => {
+        const bids = part.bids || [];
+        return bids.some((bid) => bid.status === "accepted");
+    });
+};
+
 export const OrderCard: React.FC<OrderCardProps> = ({
     order,
     onProceedToCheckout,
@@ -210,18 +218,19 @@ export const OrderCard: React.FC<OrderCardProps> = ({
     const orderMetrics = useMemo(() => {
         const parts = order.parts || [];
         const totalParts = parts.length;
-        
+        const allPartsAccepted = allPartsHaveAcceptedBids(parts);
+
         // Only count pending bids for parts that don't have accepted bids
         const totalPendingBids = parts.reduce(
             (sum: number, part: any) => {
                 const bids = part.bids || [];
                 const hasAcceptedBid = bids.some((bid: any) => bid.status === "accepted");
-                
+
                 // If part already has an accepted bid, don't count its pending bids
                 if (hasAcceptedBid) {
                     return sum;
                 }
-                
+
                 // Count pending bids only for parts without accepted bids
                 const pendingBidsCount = bids.filter((bid: any) => bid.status === "pending").length;
                 return sum + pendingBidsCount;
@@ -250,6 +259,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
             totalPendingBids,
             vehicleDisplay,
             vehicles,
+            allPartsAccepted, // Add this
         };
     }, [order]);
 
@@ -321,7 +331,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                 icon: CheckCircle,
                 color: "bg-gray-100 text-gray-800",
             };
-        if (order.hasAcceptedBids)
+        if (orderMetrics.allPartsAccepted) // Change this condition
             return {
                 label: "Ready for Checkout",
                 icon: ShoppingCart,
@@ -400,7 +410,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
         const bids = part.bids || [];
         const hasAccepted = bids.some((bid: any) => bid.status === "accepted");
         const hasPending = bids.some((bid: any) => bid.status === "pending");
-        
+
         // Only show review button if there are pending bids AND no accepted bids
         return hasPending && !hasAccepted;
     };
@@ -525,13 +535,19 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-2 mt-6 pt-4 border-t">
-                            {order.hasAcceptedBids && (
+                            {orderMetrics.allPartsAccepted && ( // Change this condition
                                 <Button
-                                    onClick={() =>
-                                        onProceedToCheckout(order.id)
-                                    }
+                                    onClick={() => onProceedToCheckout(order.id)}
                                     className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
                                     Proceed to Checkout
+                                </Button>
+                            )}
+                            {!orderMetrics.allPartsAccepted && hasPendingBids && (
+                                <Button
+                                    variant="outline"
+                                    className="w-full sm:w-auto"
+                                    disabled>
+                                    Accept All Bids to Checkout
                                 </Button>
                             )}
                             {order.status !== "cancelled" &&
