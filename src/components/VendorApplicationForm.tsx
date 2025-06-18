@@ -174,7 +174,7 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
             vendor_id: user.id,
             name: formData.pickup_name,
             address: formData.pickup_address,
-            phone: formData.pickup_phone,
+            phone: `971${formData.pickup_phone}`, // Add 971 prefix here
             instructions: formData.pickup_instructions,
             google_maps_url: formData.google_maps_url,
             is_default: true
@@ -323,13 +323,24 @@ export const VendorApplicationForm: React.FC<VendorApplicationFormProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="pickup_phone">Phone Number *</Label>
-                <Input
-                  id="pickup_phone"
-                  value={formData.pickup_phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, pickup_phone: e.target.value }))}
-                  placeholder="Contact number for this location"
-                  required
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    +971
+                  </span>
+                  <Input
+                    id="pickup_phone"
+                    value={formData.pickup_phone}
+                    onChange={(e) => {
+                      // Remove any non-numeric characters and the prefix if entered
+                      const cleaned = e.target.value.replace(/\D/g, '').replace(/^971/, '');
+                      setFormData(prev => ({ ...prev, pickup_phone: cleaned }));
+                    }}
+                    className="pl-14"
+                    placeholder="50 123 4567"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500">Enter your number without the country code</p>
               </div>
 
               <div className="space-y-2 md:col-span-2">
