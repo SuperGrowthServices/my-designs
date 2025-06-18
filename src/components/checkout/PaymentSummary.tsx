@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,8 +79,17 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
         <Button 
           onClick={onPayment}
-          disabled={processing || !deliveryAddress.trim() || !selectedDeliveryOption || redirectAttempted}
-          className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
+          disabled={
+            processing || 
+            !deliveryAddress?.trim() ||  // Check if address is empty/not selected
+            !selectedDeliveryOption || 
+            redirectAttempted
+          }
+          className={`w-full mt-6 ${
+            !deliveryAddress?.trim() 
+              ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
           size="lg"
         >
           {processing ? (
@@ -91,6 +99,8 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             </>
           ) : redirectAttempted ? (
             'Payment Session Created'
+          ) : !deliveryAddress?.trim() ? (
+            'Please Select Delivery Address'
           ) : (
             'Pay with Stripe'
           )}
