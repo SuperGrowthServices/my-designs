@@ -221,22 +221,23 @@ export const OrderCard: React.FC<OrderCardProps> = ({
         const allPartsAccepted = allPartsHaveAcceptedBids(parts);
 
         // Only count pending bids for parts that don't have accepted bids
-        const totalPendingBids = parts.reduce(
-            (sum: number, part: any) => {
-                const bids = part.bids || [];
-                const hasAcceptedBid = bids.some((bid: any) => bid.status === "accepted");
+        const totalPendingBids = parts.reduce((sum: number, part: any) => {
+            const bids = part.bids || [];
+            const hasAcceptedBid = bids.some(
+                (bid: any) => bid.status === "accepted"
+            );
 
-                // If part already has an accepted bid, don't count its pending bids
-                if (hasAcceptedBid) {
-                    return sum;
-                }
+            // If part already has an accepted bid, don't count its pending bids
+            if (hasAcceptedBid) {
+                return sum;
+            }
 
-                // Count pending bids only for parts without accepted bids
-                const pendingBidsCount = bids.filter((bid: any) => bid.status === "pending").length;
-                return sum + pendingBidsCount;
-            },
-            0
-        );
+            // Count pending bids only for parts without accepted bids
+            const pendingBidsCount = bids.filter(
+                (bid: any) => bid.status === "pending"
+            ).length;
+            return sum + pendingBidsCount;
+        }, 0);
 
         const uniqueVehicles = parts.reduce((acc: any, part: any) => {
             if (part.vehicles) {
@@ -298,8 +299,10 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
             const { error: partError } = await supabase
                 .from("parts")
-                .update({ is_accepted: true ,shipping_status: 'pending_pickup', // Critical update
-})
+                .update({
+                    is_accepted: true,
+                    shipping_status: "pending_pickup", // Critical update
+                })
                 .eq("id", partId);
 
             if (partError) throw partError;
@@ -332,7 +335,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                 icon: CheckCircle,
                 color: "bg-gray-100 text-gray-800",
             };
-        if (orderMetrics.allPartsAccepted) // Change this condition
+        if (orderMetrics.allPartsAccepted)
+            // Change this condition
             return {
                 label: "Ready for Checkout",
                 icon: ShoppingCart,
@@ -453,19 +457,21 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                                     <Badge
                                         variant="secondary"
                                         className="bg-purple-100 text-purple-800">
-                                        {orderMetrics.totalPendingBids} Pending Bids
+                                        {orderMetrics.totalPendingBids} Pending
+                                        Bids
                                     </Badge>
                                 )}
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
                             <div className="flex items-center gap-2">
-                                {order.hasAcceptedBids && !order.hasAcceptedBids && (
-                                    <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1.5 text-xs">
-                                        <Hourglass className="w-3 h-3" />
-                                        Review Bids
-                                    </Badge>
-                                )}
+                                {order.hasAcceptedBids &&
+                                    !order.hasAcceptedBids && (
+                                        <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1.5 text-xs">
+                                            <Hourglass className="w-3 h-3" />
+                                            Review Bids
+                                        </Badge>
+                                    )}
                                 <Badge
                                     className={`${status.color} flex items-center gap-1.5 text-xs`}>
                                     <StatusIcon className="w-3 h-3" />
@@ -511,7 +517,9 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                                                             </div>
                                                         </div>
                                                         {/* Only show Review Bids button if part has pending bids AND no accepted bids */}
-                                                        {hasPendingBidsToReview(part) && (
+                                                        {hasPendingBidsToReview(
+                                                            part
+                                                        ) && (
                                                             <Button
                                                                 variant="default"
                                                                 size="sm"
@@ -538,17 +546,21 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                         <div className="flex flex-col sm:flex-row gap-2 mt-6 pt-4 border-t">
                             {orderMetrics.allPartsAccepted && ( // Change this condition
                                 <Button
-                                    onClick={() => onProceedToCheckout(order.id)}
+                                    onClick={() =>
+                                        onProceedToCheckout(order.id)
+                                    }
                                     className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
                                     Proceed to Checkout
                                 </Button>
                             )}
-                            {!orderMetrics.allPartsAccepted && hasPendingBids && (
+                            {!orderMetrics.allPartsAccepted && (
                                 <Button
                                     variant="outline"
                                     className="w-full sm:w-auto"
                                     disabled>
-                                    Accept All Bids to Checkout
+                                    {hasPendingBids
+                                        ? "Accept All Bids to Checkout"
+                                        : "Waiting for Vendor Bids"}
                                 </Button>
                             )}
                             {order.status !== "cancelled" &&
