@@ -354,15 +354,23 @@ const DualCTASection = () => {
     const [authModalConfig, setAuthModalConfig] = useState<{
         showSignup: boolean;
         signupType?: 'buyer' | 'vendor';
-    }>({ showSignup: false });
+    }>({ showSignup: true }); // Set default to true
 
     const handleBuyerClick = () => {
-        setAuthModalConfig({ showSignup: true, signupType: 'buyer' });
+        // Always show signup form with buyer type
+        setAuthModalConfig({ 
+            showSignup: true, // Force signup to be true
+            signupType: 'buyer' 
+        });
         setShowAuthModal(true);
     };
 
     const handleVendorClick = () => {
-        setAuthModalConfig({ showSignup: true, signupType: 'vendor' });
+        // Always show signup form with vendor type
+        setAuthModalConfig({ 
+            showSignup: true, // Force signup to be true
+            signupType: 'vendor' 
+        });
         setShowAuthModal(true);
     };
 
@@ -383,7 +391,7 @@ const DualCTASection = () => {
                         buttonText="Start Buying Parts"
                         subtext="Free to join — No monthly fees"
                         buttonVariant="default"
-                        onClick={handleBuyerClick}
+                        onClick={handleBuyerClick} // Use the handler
                     />
                     <CTACard
                         isBuyer={false}
@@ -398,7 +406,7 @@ const DualCTASection = () => {
                         buttonText="Start Selling Parts"
                         subtext="Low fees — Fast payments"
                         buttonVariant="secondary"
-                        onClick={handleVendorClick}
+                        onClick={handleVendorClick} // Use the handler
                     />
                 </div>
             </div>
