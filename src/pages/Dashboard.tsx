@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<DashboardTab>('home');
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showVendorApplication, setShowVendorApplication] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -98,6 +99,7 @@ const Dashboard = () => {
       <AuthModal 
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)} 
+        showSignup={showSignup}
       />
     );
   }

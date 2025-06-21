@@ -1,3 +1,4 @@
+import React from 'react';
 import { createRoot } from 'react-dom/client'
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,8 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { DriverLoginPage } from '@/pages/DriverLoginPage';
 import { DriverDashboardPage } from '@/pages/DriverDashboardPage';
 import { VendorApplicationStatus } from './pages/VendorApplicationStatus';
+import BuyerDesign1 from './pages/BuyerDesign1';
+import NewDashboard from './pages/NewDashboard';
 
 const queryClient = new QueryClient();
 
@@ -29,6 +32,8 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<HomeDesign />} />
+              <Route path="/buyerdesign1" element={<BuyerDesign1 />} />
+              <Route path="/new-dashboard" element={<NewDashboard />} />
 
               {/* Protected Buyer Routes */}
               <Route path="/dashboard" element={
