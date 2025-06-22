@@ -20,6 +20,16 @@ import { DriverDashboardPage } from '@/pages/DriverDashboardPage';
 import { VendorApplicationStatus } from './pages/VendorApplicationStatus';
 import BuyerDesign1 from './pages/BuyerDesign1';
 import NewDashboard from './pages/NewDashboard';
+import SourcerDesign from './pages/SourcerDesign';
+import SourcerLayout from './components/layout/SourcerLayout';
+import SourcerDashboard from './pages/sourcer/SourcerDashboard';
+import QuoteHistory from './pages/sourcer/QuoteHistory';
+import DeliveryLayout from './components/layout/DeliveryLayout';
+import Pickup from './pages/delivery/Pickup';
+import Delivering from './pages/delivery/Delivering';
+import History from './pages/delivery/History';
+import DeliverySettings from './pages/delivery/Settings';
+import PickupMapPage from './pages/delivery/PickupMapPage';
 
 const queryClient = new QueryClient();
 
@@ -34,6 +44,25 @@ function App() {
               <Route path="/" element={<HomeDesign />} />
               <Route path="/buyerdesign1" element={<BuyerDesign1 />} />
               <Route path="/new-dashboard" element={<NewDashboard />} />
+              <Route path="/sourcer-design" element={<DashboardDesign />} />
+              <Route path="/sourcerdesign" element={<SourcerDesign />} />
+
+              {/* Sourcer Routes */}
+              <Route path="/sourcer" element={<SourcerLayout />}>
+                <Route index element={<SourcerDashboard />} />
+                <Route path="dashboard" element={<SourcerDashboard />} />
+                <Route path="history" element={<QuoteHistory />} />
+              </Route>
+
+              {/* Delivery Routes */}
+              <Route path="/delivery" element={<DeliveryLayout />}>
+                <Route index element={<Pickup />} />
+                <Route path="pickup" element={<Pickup />} />
+                <Route path="delivering" element={<Delivering />} />
+                <Route path="history" element={<History />} />
+                <Route path="settings" element={<DeliverySettings />} />
+              </Route>
+              <Route path="/delivery/map" element={<PickupMapPage />} />
 
               {/* Protected Buyer Routes */}
               <Route path="/dashboard" element={
