@@ -30,6 +30,7 @@ import Delivering from './pages/delivery/Delivering';
 import History from './pages/delivery/History';
 import DeliverySettings from './pages/delivery/Settings';
 import PickupMapPage from './pages/delivery/PickupMapPage';
+import DeliveringMapPage from './pages/delivery/DeliveringMapPage';
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ function App() {
                 <Route path="settings" element={<DeliverySettings />} />
               </Route>
               <Route path="/delivery/map" element={<PickupMapPage />} />
+              <Route path="/delivery/map-delivering" element={<DeliveringMapPage />} />
 
               {/* Protected Buyer Routes */}
               <Route path="/dashboard" element={

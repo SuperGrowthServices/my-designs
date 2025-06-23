@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { mockDeliveryOrders, DeliveryOrder, DeliveryPart } from '@/data/deliveryMockData';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,8 @@ const Pickup: React.FC = () => {
     const [selectedParts, setSelectedParts] = useState<Record<string, Set<string>>>({});
     const [pickupModalState, setPickupModalState] = useState<{ isOpen: boolean; vendorId: string | null }>({ isOpen: false, vendorId: null });
     const [detailsModalState, setDetailsModalState] = useState<{ isOpen: boolean; part: EnrichedPart | null }>({ isOpen: false, part: null });
+    const location = useLocation();
+    const navigate = useNavigate();
 
     const partsByVendor = useMemo((): GroupedByVendor[] => {
         const allParts: EnrichedPart[] = orders.flatMap(order => 
@@ -132,6 +134,18 @@ const Pickup: React.FC = () => {
     const pickupModalParts = partsByVendor
         .find(group => group.vendor.id === pickupModalState.vendorId)
         ?.parts.filter(p => selectedParts[pickupModalState.vendorId!]?.has(p.id)) || [];
+
+    useEffect(() => {
+        if (location.state && location.state.vendorId && location.state.partIds) {
+            const { vendorId, partIds } = location.state;
+            setSelectedParts(prev => ({
+                ...prev,
+                [vendorId]: new Set(partIds)
+            }));
+            setPickupModalState({ isOpen: true, vendorId });
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, navigate, location.pathname]);
 
     return (
         <div className="space-y-4">
