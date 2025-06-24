@@ -22,6 +22,7 @@ interface ReceiptModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   orderId: string | null;
+  injectedParts?: any[]; // For delivery portal synthetic data
 }
 
 const mockBuyerInfo = {
@@ -42,10 +43,12 @@ const groupPartsByVehicle = (parts: Part[]) => {
     }, {} as Record<string, Part[]>);
 };
 
-export const ReceiptModal = ({ isOpen, onOpenChange, orderId }: ReceiptModalProps) => {
+export const ReceiptModal = ({ isOpen, onOpenChange, orderId, injectedParts }: ReceiptModalProps) => {
   if (!orderId) return null;
   
-  const orderParts = mockParts.filter(p => p.orderId === orderId && (p.status === 'DELIVERED' || p.status === 'REFUNDED'));
+  const orderParts = injectedParts
+    ? injectedParts
+    : mockParts.filter(p => p.orderId === orderId && (p.status === 'DELIVERED' || p.status === 'REFUNDED'));
   if (orderParts.length === 0) return null;
 
   const orderDate = new Date(orderParts[0].orderDate).toLocaleDateString('en-US', {
@@ -76,7 +79,7 @@ export const ReceiptModal = ({ isOpen, onOpenChange, orderId }: ReceiptModalProp
                 <DialogTitle className="text-3xl font-bold">Order Receipt</DialogTitle>
                 <div className="flex justify-between text-sm pt-2">
                     <div>
-                        <p className="text-muted-foreground">Order ID: <span className="font-medium text-foreground">{orderId}</span></p>
+                        <p className="text-muted-foreground">Receipt ID: <span className="font-medium text-foreground">{orderId}</span></p>
                         <p className="text-muted-foreground">Order Date: <span className="font-medium text-foreground">{orderDate}</span></p>
                     </div>
                     <div className="text-right">

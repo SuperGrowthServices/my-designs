@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronUp, FileText, Info, Image as ImageIcon } from 'lucide-react';
+import { ReceiptModal as SharedReceiptModal } from '@/components/buyer/ReceiptModal';
 
 // Mock delivery history data (in-memory for now)
 const mockHistory = [
@@ -49,6 +50,8 @@ const History: React.FC = () => {
   const [invoiceModal, setInvoiceModal] = useState<any>(null);
   const [notesModal, setNotesModal] = useState<any>(null);
   const [vendorModal, setVendorModal] = useState<any>(null);
+  const [receiptModalId, setReceiptModalId] = useState<string | null>(null);
+  const [receiptModalParts, setReceiptModalParts] = useState<any[]>([]);
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -100,7 +103,26 @@ const History: React.FC = () => {
               <Button variant="outline" size="sm" onClick={() => setExpanded(expanded === delivery.id ? null : delivery.id)}>
                 {expanded === delivery.id ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />} More Info
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setInvoiceModal(delivery)}><FileText className="w-4 h-4 mr-1" /> View Invoice</Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                setReceiptModalId(delivery.id);
+                setReceiptModalParts(delivery.parts.map((part: any, idx: number) => ({
+                  id: delivery.id + '-' + idx,
+                  orderId: delivery.id,
+                  vehicleId: 'delivery', // No vehicle info in mock, so use a placeholder
+                  orderDate: delivery.date,
+                  partNumber: part.partNumber || '',
+                  name: part.partName,
+                  status: 'DELIVERED',
+                  price: part.unitPrice,
+                  deliveryCharge: 0,
+                  condition: '',
+                  warranty: '',
+                  quantity: part.quantity,
+                  notes: '',
+                  sourcerPhotos: [],
+                  deliveryContact: delivery.phone,
+                })));
+              }}><FileText className="w-4 h-4 mr-1" /> View Invoice</Button>
               <Button variant="outline" size="sm" onClick={() => setNotesModal(delivery)}><ImageIcon className="w-4 h-4 mr-1" /> Delivery Notes</Button>
             </div>
             {expanded === delivery.id && (
@@ -114,48 +136,14 @@ const History: React.FC = () => {
         ))}
       </div>
 
-      {/* Invoice Modal */}
-      <Dialog open={!!invoiceModal} onOpenChange={() => setInvoiceModal(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Invoice for {invoiceModal?.customer}</DialogTitle>
-          </DialogHeader>
-          {invoiceModal && (
-            <div>
-              <div className="mb-2 text-gray-700">{invoiceModal.address}</div>
-              <div className="mb-2 text-gray-700">Driver: {invoiceModal.driver}</div>
-              <div className="mb-2 text-gray-700">Date: {invoiceModal.date}</div>
-              <div className="mb-2 text-gray-700">Payment: {invoiceModal.paymentMethod}</div>
-              <div className="mb-2 text-gray-700">Delivery Fee: {formatCurrency(invoiceModal.deliveryFee)}</div>
-              <div className="mb-2 text-gray-700 font-bold">Grand Total: {formatCurrency(invoiceModal.grandTotal)}</div>
-              <div className="overflow-x-auto mt-4">
-                <table className="min-w-full text-sm border rounded-lg">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2 text-left">Part Name</th>
-                      <th className="px-3 py-2 text-center">Qty</th>
-                      <th className="px-3 py-2 text-right">Unit Price</th>
-                      <th className="px-3 py-2 text-right">Total</th>
-                      <th className="px-3 py-2 text-left">Vendor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoiceModal.parts.map((part, idx) => (
-                      <tr key={idx}>
-                        <td className="px-3 py-2">{part.partName}</td>
-                        <td className="px-3 py-2 text-center">{part.quantity}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(part.unitPrice)}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(part.unitPrice * part.quantity)}</td>
-                        <td className="px-3 py-2 text-left">{part.vendor.name}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Invoice Modal (Unified Receipt) */}
+      <SharedReceiptModal
+        isOpen={!!receiptModalId}
+        onOpenChange={() => setReceiptModalId(null)}
+        orderId={receiptModalId}
+        // @ts-ignore: inject parts for this synthetic order
+        injectedParts={receiptModalParts}
+      />
 
       {/* Delivery Notes Modal */}
       <Dialog open={!!notesModal} onOpenChange={() => setNotesModal(null)}>

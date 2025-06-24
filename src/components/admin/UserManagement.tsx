@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { useAdminData, User } from '@/hooks/useAdminData';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { UserDetailsModal } from './UserDetailsModal';
+import { useAdminData, User } from '@/hooks/useAdminData';
 
 export const UserManagement: React.FC = () => {
   const { users, refresh: refreshAdminData } = useAdminData();

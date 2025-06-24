@@ -31,6 +31,8 @@ import History from './pages/delivery/History';
 import DeliverySettings from './pages/delivery/Settings';
 import PickupMapPage from './pages/delivery/PickupMapPage';
 import DeliveringMapPage from './pages/delivery/DeliveringMapPage';
+import AdminDesign from './pages/AdminDesign';
+import Settings from './pages/sourcer/Settings';
 
 const queryClient = new QueryClient();
 
@@ -53,6 +55,7 @@ function App() {
                 <Route index element={<SourcerDashboard />} />
                 <Route path="dashboard" element={<SourcerDashboard />} />
                 <Route path="history" element={<QuoteHistory />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
 
               {/* Delivery Routes */}
@@ -122,6 +125,8 @@ function App() {
                   <DriverDashboardPage />
                 </ProtectedRoute>
               } />
+
+              <Route path="/admin-design" element={<AdminDesign />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
