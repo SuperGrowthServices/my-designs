@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Wrench, Store, Search, DollarSign, ShieldCheck, CheckCircle, XCircle, ArrowRight, Star, Facebook, Instagram, Linkedin, Mail, Phone, MapPin, CreditCard, Lock, BadgeCheck } from 'lucide-react';
 import { FaMapMarkerAlt, FaShieldAlt, FaUsers, FaBoxOpen } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthModal } from '@/components/AuthModal';
 
 const carLogos = [
@@ -312,7 +312,7 @@ interface CTACardProps {
   buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" | null | undefined;
   subtext: string;
   isBuyer: boolean;
-  onClick: () => void; // Add this line
+  onClick: () => void;
 }
 
 const CTACard: React.FC<CTACardProps> = ({ 
@@ -323,7 +323,7 @@ const CTACard: React.FC<CTACardProps> = ({
   buttonVariant, 
   subtext, 
   isBuyer,
-  onClick // Add this line
+  onClick
 }) => (
   <div className="bg-white rounded-lg shadow-xl p-8 text-center transition-transform transform hover:-translate-y-2 flex flex-col h-full">
     <div className="flex-grow">
@@ -340,7 +340,7 @@ const CTACard: React.FC<CTACardProps> = ({
         size="lg" 
         variant={buttonVariant} 
         className="w-full sm:w-auto"
-        onClick={onClick} // Add this line
+        onClick={onClick}
       >
         {buttonText}
       </Button>
@@ -350,28 +350,14 @@ const CTACard: React.FC<CTACardProps> = ({
 );
 
 const DualCTASection = () => {
-    const [showAuthModal, setShowAuthModal] = useState(false);
-    const [authModalConfig, setAuthModalConfig] = useState<{
-        showSignup: boolean;
-        signupType?: 'buyer' | 'vendor';
-    }>({ showSignup: true }); // Set default to true
+    const navigate = useNavigate();
 
     const handleBuyerClick = () => {
-        // Always show signup form with buyer type
-        setAuthModalConfig({ 
-            showSignup: true, // Force signup to be true
-            signupType: 'buyer' 
-        });
-        setShowAuthModal(true);
+        navigate('/signup?type=buyer');
     };
 
     const handleVendorClick = () => {
-        // Always show signup form with vendor type
-        setAuthModalConfig({ 
-            showSignup: true, // Force signup to be true
-            signupType: 'vendor' 
-        });
-        setShowAuthModal(true);
+        navigate('/signup?type=vendor');
     };
 
     return (
@@ -391,7 +377,7 @@ const DualCTASection = () => {
                         buttonText="Start Buying Parts"
                         subtext="Free to join — No monthly fees"
                         buttonVariant="default"
-                        onClick={handleBuyerClick} // Use the handler
+                        onClick={handleBuyerClick}
                     />
                     <CTACard
                         isBuyer={false}
@@ -406,16 +392,10 @@ const DualCTASection = () => {
                         buttonText="Start Selling Parts"
                         subtext="Low fees — Fast payments"
                         buttonVariant="secondary"
-                        onClick={handleVendorClick} // Use the handler
+                        onClick={handleVendorClick}
                     />
                 </div>
             </div>
-            <AuthModal 
-                isOpen={showAuthModal} 
-                onClose={() => setShowAuthModal(false)}
-                showSignup={authModalConfig.showSignup}
-                signupType={authModalConfig.signupType}
-            />
         </section>
     );
 };
@@ -541,11 +521,12 @@ export const HomeDesign = () => {
                 <PaymentTrustSection />
             </main>
             <Footer />
-<AuthModal 
+            <AuthModal 
                 isOpen={showAuthModal} 
                 onClose={() => setShowAuthModal(false)}
                 showSignup={authModalConfig.showSignup}
                 signupType={authModalConfig.signupType}
-            />        </div>
+            />
+        </div>
     );
 };

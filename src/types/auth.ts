@@ -1,4 +1,4 @@
-import { User, Session } from '@supabase/supabase-js';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 export type UserRole = 'buyer' | 'vendor' | 'admin' | 'driver';
 
@@ -21,7 +21,7 @@ export interface SignUpData {
 
 export interface AuthResult {
   data: {
-    user: User;
+    user: SupabaseUser;
     session: Session;
   } | null;
   error: Error | null;
@@ -38,4 +38,20 @@ export interface AuthContextType {
   signUp: (data: SignUpData) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<SignInResponse>;
   signOut: () => Promise<void>;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  business_name: string;
+  whatsapp_number: string;
+  location: string;
+  address: string;
+  google_maps_link: string;
+  created_at: string;
+  roles: string[];
+  status: 'active' | 'disabled';
+  vehicleMakes: string[];
+  referred_by: string;
 }

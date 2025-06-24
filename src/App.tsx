@@ -33,6 +33,7 @@ import PickupMapPage from './pages/delivery/PickupMapPage';
 import DeliveringMapPage from './pages/delivery/DeliveringMapPage';
 import AdminDesign from './pages/AdminDesign';
 import Settings from './pages/sourcer/Settings';
+import { SignupPage } from './pages/SignupPage';
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<HomeDesign />} />
+              <Route path="/signup" element={<SignupPage />} />
               <Route path="/buyerdesign1" element={<BuyerDesign1 />} />
               <Route path="/new-dashboard" element={<NewDashboard />} />
               <Route path="/sourcer-design" element={<DashboardDesign />} />
